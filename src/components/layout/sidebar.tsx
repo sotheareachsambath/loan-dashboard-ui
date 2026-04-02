@@ -1,0 +1,174 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import { usePathname } from "@/i18n/navigation";
+import { useSidebar } from "./sidebar-context";
+
+const navItems = [
+  {
+    key: "dashboard",
+    href: "/",
+    translationKey: "nav.dashboard" as const,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    key: "users",
+    href: "/users",
+    translationKey: "nav.users" as const,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
+  {
+    key: "loan-products",
+    href: "/loan-products",
+    translationKey: "nav.loanProducts" as const,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="7" width="20" height="14" rx="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      </svg>
+    ),
+  },
+  {
+    key: "loan-applications",
+    href: "/loan-applications",
+    translationKey: "nav.loanApplications" as const,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+      </svg>
+    ),
+  },
+  {
+    key: "disbursements",
+    href: "/disbursements",
+    translationKey: "nav.disbursements" as const,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+      </svg>
+    ),
+  },
+  {
+    key: "repayments",
+    href: "/repayments",
+    translationKey: "nav.repayments" as const,
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+        <polyline points="17 6 23 6 23 12" />
+      </svg>
+    ),
+  },
+];
+
+export default function Sidebar() {
+  const t = useTranslations();
+  const pathname = usePathname();
+  const { collapsed } = useSidebar();
+
+  function isActive(href: string) {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  }
+
+  return (
+    <aside
+      className={`fixed top-0 left-0 z-40 h-screen bg-[#0f1623] flex flex-col transition-all duration-300 ease-in-out ${
+        collapsed ? "w-[72px]" : "w-[260px]"
+      }`}
+    >
+      {/* Logo area */}
+      <div className={`flex items-center gap-3 h-16 border-b border-white/[0.06] ${collapsed ? "justify-center px-0" : "px-6"}`}>
+        <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        {!collapsed && (
+          <div className="overflow-hidden">
+            <p className="text-[13px] font-semibold text-white leading-none whitespace-nowrap">LoanFlow</p>
+            <p className="text-[10px] text-gray-500 mt-0.5 whitespace-nowrap">Management System</p>
+          </div>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4">
+        {!collapsed && (
+          <p className="px-3 mb-2 text-[10px] font-semibold tracking-widest uppercase text-gray-500">
+            Menu
+          </p>
+        )}
+        <ul className="space-y-0.5">
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <li key={item.key}>
+                <Link
+                  href={item.href}
+                  title={collapsed ? t(item.translationKey) : undefined}
+                  className={`group flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 ${
+                    collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"
+                  } ${
+                    active
+                      ? "bg-white/[0.08] text-white shadow-sm shadow-black/10"
+                      : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`flex-shrink-0 transition-colors duration-150 ${
+                      active ? "text-blue-400" : "text-gray-500 group-hover:text-gray-400"
+                    }`}
+                  >
+                    {item.icon}
+                  </span>
+                  {!collapsed && (
+                    <>
+                      <span className="whitespace-nowrap overflow-hidden">{t(item.translationKey)}</span>
+                      {active && (
+                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-sm shadow-blue-400/50" />
+                      )}
+                    </>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      {/* Bottom section */}
+      <div className="px-3 py-4 border-t border-white/[0.06]">
+        <div className={`flex items-center gap-3 ${collapsed ? "justify-center px-0" : "px-2"}`}>
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-[11px] font-bold text-white shadow-lg shadow-blue-500/20">
+            A
+          </div>
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-medium text-gray-200 truncate">Admin User</p>
+              <p className="text-[10px] text-gray-500 truncate">admin@loanflow.com</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+}

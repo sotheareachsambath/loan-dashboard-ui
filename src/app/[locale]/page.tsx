@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import LocaleSwitcher from "@/components/locale-switcher";
 import { useUsers, useLoanApplications } from "@/lib/api/hooks";
 
 const UsersIcon = () => (
@@ -139,45 +138,32 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900">{t("common.appName")}</h1>
-            <LocaleSwitcher />
-          </div>
-        </div>
-      </header>
+    <>
+      {/* Page heading */}
+      <div className="mb-10">
+        <p className="text-[11px] font-medium tracking-widest uppercase text-gray-400 mb-2">Overview</p>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-1">{t("dashboard.title")}</h2>
+        <p className="text-sm text-gray-500">{t("dashboard.welcome")}</p>
+      </div>
 
-      {/* Main */}
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        {/* Page heading */}
-        <div className="mb-10">
-          <p className="text-[11px] font-medium tracking-widest uppercase text-gray-400 mb-2">Overview</p>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-1">{t("dashboard.title")}</h2>
-          <p className="text-sm text-gray-500">{t("dashboard.welcome")}</p>
-        </div>
+      {/* Stat cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        {stats.map((s) => <StatCard key={s.label} {...s} />)}
+      </div>
 
-        {/* Stat cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          {stats.map((s) => <StatCard key={s.label} {...s} />)}
-        </div>
+      {/* Nav section */}
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-base font-semibold text-gray-900">{t("nav.dashboard")}</h3>
+        <span className="text-[11px] text-gray-400 bg-black/[0.04] rounded-full px-3 py-1">5 modules</span>
+      </div>
 
-        {/* Nav section */}
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-base font-semibold text-gray-900">{t("nav.dashboard")}</h3>
-          <span className="text-[11px] text-gray-400 bg-black/[0.04] rounded-full px-3 py-1">5 modules</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <NavCard href="/users" title={t("nav.users")} description="Manage borrower accounts and profiles" actionLabel="View all users" meta={`${totalUsers.toLocaleString()} total`} icon={<UsersIcon />} iconBg="bg-blue-50" iconColor="text-blue-600" />
-          <NavCard href="/loan-products" title={t("nav.loanProducts")} description="Configure rates, terms, and product tiers" actionLabel="Manage products" meta="12 active" icon={<ProductsIcon />} iconBg="bg-violet-50" iconColor="text-violet-600" />
-          <NavCard href="/loan-applications" title={t("nav.loanApplications")} description="Review, approve or reject submissions" actionLabel="View applications" meta={`${pendingApplications} pending`} metaHighlight={pendingApplications > 0} icon={<ApplicationsIcon />} iconBg="bg-amber-50" iconColor="text-amber-600" />
-          <NavCard href="/disbursements" title={t("nav.disbursements")} description="Track and process loan disbursements" actionLabel="View disbursements" meta={`${totalDisbursed} processed`} icon={<DisbursementsIcon />} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
-          <NavCard href="/repayments" title={t("nav.repayments")} description="Monitor schedules and overdue accounts" actionLabel="View repayments" meta="On track" icon={<RepaymentsIcon />} iconBg="bg-red-50" iconColor="text-red-500" />
-        </div>
-      </main>
-    </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <NavCard href="/users" title={t("nav.users")} description="Manage borrower accounts and profiles" actionLabel="View all users" meta={`${totalUsers.toLocaleString()} total`} icon={<UsersIcon />} iconBg="bg-blue-50" iconColor="text-blue-600" />
+        <NavCard href="/loan-products" title={t("nav.loanProducts")} description="Configure rates, terms, and product tiers" actionLabel="Manage products" meta="12 active" icon={<ProductsIcon />} iconBg="bg-violet-50" iconColor="text-violet-600" />
+        <NavCard href="/loan-applications" title={t("nav.loanApplications")} description="Review, approve or reject submissions" actionLabel="View applications" meta={`${pendingApplications} pending`} metaHighlight={pendingApplications > 0} icon={<ApplicationsIcon />} iconBg="bg-amber-50" iconColor="text-amber-600" />
+        <NavCard href="/disbursements" title={t("nav.disbursements")} description="Track and process loan disbursements" actionLabel="View disbursements" meta={`${totalDisbursed} processed`} icon={<DisbursementsIcon />} iconBg="bg-emerald-50" iconColor="text-emerald-600" />
+        <NavCard href="/repayments" title={t("nav.repayments")} description="Monitor schedules and overdue accounts" actionLabel="View repayments" meta="On track" icon={<RepaymentsIcon />} iconBg="bg-red-50" iconColor="text-red-500" />
+      </div>
+    </>
   );
 }
