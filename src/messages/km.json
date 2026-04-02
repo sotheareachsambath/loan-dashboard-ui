@@ -1,0 +1,157 @@
+{
+  "common": {
+    "appName": "ប្រព័ន្ធគ្រប់គ្រងឥណទាន",
+    "loading": "កំពុងផ្ទុក...",
+    "error": "មានបញ្ហាកើតឡើង",
+    "save": "រក្សាទុក",
+    "cancel": "បោះបង់",
+    "delete": "លុប",
+    "edit": "កែប្រែ",
+    "create": "បង្កើត",
+    "search": "ស្វែងរក",
+    "filter": "តម្រង",
+    "actions": "សកម្មភាព",
+    "status": "ស្ថានភាព",
+    "back": "ថយក្រោយ",
+    "submit": "ដាក់ស្នើ",
+    "confirm": "បញ្ជាក់",
+    "noData": "មិនមានទិន្នន័យ",
+    "deleteConfirm": "តើអ្នកប្រាកដថាចង់លុបទេ? សកម្មភាពនេះមិនអាចត្រលប់វិញបានទេ។",
+    "clear": "សម្អាត",
+    "page": "ទំព័រ",
+    "of": "នៃ",
+    "showing": "កំពុងបង្ហាញ",
+    "entries": "ធាតុ"
+  },
+  "nav": {
+    "dashboard": "ផ្ទាំងគ្រប់គ្រង",
+    "users": "អ្នកប្រើប្រាស់",
+    "loanProducts": "ផលិតផលឥណទាន",
+    "loanApplications": "ពាក្យស្នើសុំឥណទាន",
+    "repaymentSchedules": "កាលវិភាគសងប្រាក់",
+    "disbursements": "ការបើកប្រាក់",
+    "repayments": "ការសងប្រាក់",
+    "reports": "របាយការណ៍"
+  },
+  "users": {
+    "title": "គ្រប់គ្រងអ្នកប្រើប្រាស់",
+    "createUser": "បង្កើតអ្នកប្រើប្រាស់",
+    "editUser": "កែប្រែអ្នកប្រើប្រាស់",
+    "email": "អ៊ីមែល",
+    "password": "ពាក្យសម្ងាត់",
+    "firstName": "នាមខ្លួន",
+    "lastName": "នាមត្រកូល",
+    "phone": "ទូរសព្ទ",
+    "role": "តួនាទី",
+    "roles": {
+      "ADMIN": "អ្នកគ្រប់គ្រង",
+      "DIRECTOR": "នាយក",
+      "MANAGER": "អ្នកចាត់ការ",
+      "LOAN_OFFICER": "មន្ត្រីឥណទាន",
+      "TELLER": "បេឡាករ",
+      "CUSTOMER": "អតិថិជន"
+    },
+    "statuses": {
+      "ACTIVE": "សកម្ម",
+      "INACTIVE": "អសកម្ម",
+      "SUSPENDED": "ផ្អាក"
+    }
+  },
+  "loanProducts": {
+    "title": "ផលិតផលឥណទាន",
+    "createProduct": "បង្កើតផលិតផលឥណទាន",
+    "name": "ឈ្មោះផលិតផល",
+    "code": "កូដផលិតផល",
+    "loanType": "ប្រភេទឥណទាន",
+    "interestRateMethod": "វិធីសាស្ត្រគណនាការប្រាក់",
+    "interestRate": "អត្រាការប្រាក់",
+    "amount": "ចំនួនទឹកប្រាក់",
+    "term": "រយៈពេល (ខែ)",
+    "currency": "រូបិយប័ណ្ណ",
+    "gracePeriod": "រយៈពេលអនុគ្រោះ (ថ្ងៃ)",
+    "penaltyRate": "អត្រាពិន័យ",
+    "collateral": "តម្រូវឱ្យមានវត្ថុធានា",
+    "loanTypes": {
+      "PERSONAL": "ផ្ទាល់ខ្លួន",
+      "BUSINESS": "អាជីវកម្ម",
+      "AGRICULTURAL": "កសិកម្ម",
+      "GROUP_SOLIDARITY": "សាមគ្គីភាពក្រុម"
+    },
+    "interestMethods": {
+      "FLAT_RATE": "អត្រាថេរ",
+      "DECLINING_BALANCE": "សមតុល្យថយចុះ"
+    }
+  },
+  "loanApplications": {
+    "title": "ពាក្យស្នើសុំឥណទាន",
+    "createApplication": "ពាក្យស្នើសុំថ្មី",
+    "applicant": "អ្នកដាក់ពាក្យ",
+    "product": "ផលិតផលឥណទាន",
+    "requestedAmount": "ចំនួនស្នើសុំ",
+    "approvedAmount": "ចំនួនអនុម័ត",
+    "interestRate": "អត្រាការប្រាក់",
+    "termMonths": "រយៈពេល (ខែ)",
+    "frequency": "ប្រេកង់សង",
+    "purpose": "គោលបំណង",
+    "officer": "មន្ត្រីឥណទាន",
+    "submitForReview": "ដាក់ស្នើសម្រាប់ពិនិត្យ",
+    "assignOfficer": "កំណត់មន្ត្រី",
+    "approve": "អនុម័ត",
+    "reject": "បដិសេធ",
+    "return": "ប្រគល់សម្រាប់កែប្រែ",
+    "statuses": {
+      "DRAFT": "សេចក្តីព្រាង",
+      "SUBMITTED": "បានដាក់ស្នើ",
+      "UNDER_REVIEW": "កំពុងពិនិត្យ",
+      "OFFICER_APPROVED": "មន្ត្រីអនុម័ត",
+      "MANAGER_APPROVED": "អ្នកចាត់ការអនុម័ត",
+      "DIRECTOR_APPROVED": "នាយកអនុម័ត",
+      "APPROVED": "អនុម័ត",
+      "REJECTED": "បដិសេធ",
+      "DISBURSED": "បានបើកប្រាក់",
+      "CLOSED": "បិទ"
+    },
+    "frequencies": {
+      "DAILY": "ប្រចាំថ្ងៃ",
+      "WEEKLY": "ប្រចាំសប្តាហ៍",
+      "MONTHLY": "ប្រចាំខែ"
+    }
+  },
+  "disbursements": {
+    "title": "ការបើកប្រាក់",
+    "createDisbursement": "បើកប្រាក់ថ្មី",
+    "amount": "ចំនួនទឹកប្រាក់",
+    "method": "វិធីសាស្ត្រ",
+    "bankName": "ឈ្មោះធនាគារ",
+    "accountNumber": "លេខគណនី",
+    "reference": "លេខយោង",
+    "notes": "កំណត់ចំណាំ",
+    "methods": {
+      "CASH": "សាច់ប្រាក់",
+      "BANK_TRANSFER": "ផ្ទេរធនាគារ"
+    }
+  },
+  "repayments": {
+    "title": "ការសងប្រាក់",
+    "recordPayment": "កត់ត្រាការបង់ប្រាក់",
+    "amount": "ចំនួនទឹកប្រាក់",
+    "type": "ប្រភេទ",
+    "paymentMethod": "វិធីបង់ប្រាក់",
+    "reference": "លេខយោង",
+    "parReport": "របាយការណ៍ PAR",
+    "types": {
+      "REGULAR": "ធម្មតា",
+      "EARLY_REPAYMENT": "សងមុនកាលកំណត់",
+      "PREPAYMENT": "បង់មុន",
+      "PENALTY": "ពិន័យ"
+    }
+  },
+  "dashboard": {
+    "title": "ផ្ទាំងគ្រប់គ្រង",
+    "welcome": "សូមស្វាគមន៍មកកាន់ប្រព័ន្ធគ្រប់គ្រងឥណទាន",
+    "totalUsers": "អ្នកប្រើប្រាស់សរុប",
+    "activeLoans": "ឥណទានសកម្ម",
+    "pendingApplications": "ពាក្យស្នើសុំកំពុងរង់ចាំ",
+    "totalDisbursed": "បើកប្រាក់សរុប"
+  }
+}

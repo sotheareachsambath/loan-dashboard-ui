@@ -1,0 +1,157 @@
+{
+  "common": {
+    "appName": "Loan Management System",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "actions": "Actions",
+    "status": "Status",
+    "back": "Back",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "noData": "No data available",
+    "deleteConfirm": "Are you sure you want to delete this? This action cannot be undone.",
+    "clear": "Clear",
+    "page": "Page",
+    "of": "of",
+    "showing": "Showing",
+    "entries": "entries"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "loanProducts": "Loan Products",
+    "loanApplications": "Loan Applications",
+    "repaymentSchedules": "Repayment Schedules",
+    "disbursements": "Disbursements",
+    "repayments": "Repayments",
+    "reports": "Reports"
+  },
+  "users": {
+    "title": "User Management",
+    "createUser": "Create User",
+    "editUser": "Edit User",
+    "email": "Email",
+    "password": "Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone",
+    "role": "Role",
+    "roles": {
+      "ADMIN": "Admin",
+      "DIRECTOR": "Director",
+      "MANAGER": "Manager",
+      "LOAN_OFFICER": "Loan Officer",
+      "TELLER": "Teller",
+      "CUSTOMER": "Customer"
+    },
+    "statuses": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive",
+      "SUSPENDED": "Suspended"
+    }
+  },
+  "loanProducts": {
+    "title": "Loan Products",
+    "createProduct": "Create Loan Product",
+    "name": "Product Name",
+    "code": "Product Code",
+    "loanType": "Loan Type",
+    "interestRateMethod": "Interest Rate Method",
+    "interestRate": "Interest Rate",
+    "amount": "Amount",
+    "term": "Term (Months)",
+    "currency": "Currency",
+    "gracePeriod": "Grace Period (Days)",
+    "penaltyRate": "Penalty Rate",
+    "collateral": "Requires Collateral",
+    "loanTypes": {
+      "PERSONAL": "Personal",
+      "BUSINESS": "Business",
+      "AGRICULTURAL": "Agricultural",
+      "GROUP_SOLIDARITY": "Group Solidarity"
+    },
+    "interestMethods": {
+      "FLAT_RATE": "Flat Rate",
+      "DECLINING_BALANCE": "Declining Balance"
+    }
+  },
+  "loanApplications": {
+    "title": "Loan Applications",
+    "createApplication": "New Application",
+    "applicant": "Applicant",
+    "product": "Loan Product",
+    "requestedAmount": "Requested Amount",
+    "approvedAmount": "Approved Amount",
+    "interestRate": "Interest Rate",
+    "termMonths": "Term (Months)",
+    "frequency": "Repayment Frequency",
+    "purpose": "Purpose",
+    "officer": "Loan Officer",
+    "submitForReview": "Submit for Review",
+    "assignOfficer": "Assign Officer",
+    "approve": "Approve",
+    "reject": "Reject",
+    "return": "Return for Rework",
+    "statuses": {
+      "DRAFT": "Draft",
+      "SUBMITTED": "Submitted",
+      "UNDER_REVIEW": "Under Review",
+      "OFFICER_APPROVED": "Officer Approved",
+      "MANAGER_APPROVED": "Manager Approved",
+      "DIRECTOR_APPROVED": "Director Approved",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "DISBURSED": "Disbursed",
+      "CLOSED": "Closed"
+    },
+    "frequencies": {
+      "DAILY": "Daily",
+      "WEEKLY": "Weekly",
+      "MONTHLY": "Monthly"
+    }
+  },
+  "disbursements": {
+    "title": "Disbursements",
+    "createDisbursement": "New Disbursement",
+    "amount": "Amount",
+    "method": "Method",
+    "bankName": "Bank Name",
+    "accountNumber": "Account Number",
+    "reference": "Reference Number",
+    "notes": "Notes",
+    "methods": {
+      "CASH": "Cash",
+      "BANK_TRANSFER": "Bank Transfer"
+    }
+  },
+  "repayments": {
+    "title": "Repayments",
+    "recordPayment": "Record Payment",
+    "amount": "Amount",
+    "type": "Type",
+    "paymentMethod": "Payment Method",
+    "reference": "Reference",
+    "parReport": "PAR Report",
+    "types": {
+      "REGULAR": "Regular",
+      "EARLY_REPAYMENT": "Early Repayment",
+      "PREPAYMENT": "Prepayment",
+      "PENALTY": "Penalty"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to the Loan Management System",
+    "totalUsers": "Total Users",
+    "activeLoans": "Active Loans",
+    "pendingApplications": "Pending Applications",
+    "totalDisbursed": "Total Disbursed"
+  }
+}
