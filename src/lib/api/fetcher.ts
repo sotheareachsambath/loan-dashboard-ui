@@ -16,10 +16,10 @@ export async function fetcher<T>(url: string): Promise<T> {
     res = await fetch(url, {
       headers: { ...getAuthHeaders() },
     });
-  } catch (e) {
-    const error = new Error("Network error");
-    (error as any).status = 0;
-    (error as any).info = null;
+  } catch {
+    const error = new Error("Network error") as Error & { status?: number; info?: unknown };
+    error.status = 0;
+    error.info = null;
     throw error;
   }
   if (!res.ok) {
@@ -29,9 +29,9 @@ export async function fetcher<T>(url: string): Promise<T> {
       window.location.href = "/login";
       throw new Error("Session expired");
     }
-    const error = new Error("API request failed");
-    (error as any).status = res.status;
-    (error as any).info = await res.json().catch(() => null);
+    const error = new Error("API request failed") as Error & { status?: number; info?: unknown };
+    error.status = res.status;
+    error.info = await res.json().catch(() => null);
     throw error;
   }
   return res.json().catch(() => null as unknown as T);
@@ -63,10 +63,10 @@ async function request<T>(
       },
       ...options,
     });
-  } catch (e) {
-    const error = new Error("Network error");
-    (error as any).status = 0;
-    (error as any).info = null;
+  } catch {
+    const error = new Error("Network error") as Error & { status?: number; info?: unknown };
+    error.status = 0;
+    error.info = null;
     throw error;
   }
   if (!res.ok) {
@@ -76,9 +76,9 @@ async function request<T>(
       window.location.href = "/login";
       throw new Error("Session expired");
     }
-    const error = new Error("API request failed");
-    (error as any).status = res.status;
-    (error as any).info = await res.json().catch(() => null);
+    const error = new Error("API request failed") as Error & { status?: number; info?: unknown };
+    error.status = res.status;
+    error.info = await res.json().catch(() => null);
     throw error;
   }
   return res.json().catch(() => null as unknown as T);

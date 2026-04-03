@@ -68,6 +68,12 @@ export function useRepaymentSchedule(loanId: string | null) {
 
 // ── Disbursements ──────────────────────────────────────
 
+export function useDisbursements(params?: { page?: number; limit?: number }) {
+  return useAPI<PaginatedResponse<Disbursement>>(
+    endpoints.disbursements(params && { ...params })
+  );
+}
+
 export function useDisbursementsByLoan(loanId: string | null) {
   return useAPI<Disbursement[]>(
     loanId ? endpoints.disbursementsByLoan(loanId) : null
@@ -79,6 +85,16 @@ export function useDisbursement(id: string | null) {
 }
 
 // ── Repayments ─────────────────────────────────────────
+
+export function useRepayments(params?: { page?: number; limit?: number }) {
+  return useAPI<PaginatedResponse<Repayment>>(
+    endpoints.repayments(params && { ...params })
+  );
+}
+
+export function useRepayment(id: string | null) {
+  return useAPI<Repayment>(id ? endpoints.repayment(id) : null);
+}
 
 export function useRepaymentsByLoan(loanId: string | null) {
   return useAPI<Repayment[]>(

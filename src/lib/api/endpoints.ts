@@ -40,11 +40,16 @@ export const endpoints = {
     buildKey(`/repayment-schedules/loan/${loanId}`),
 
   // Disbursements
+  disbursements: (params?: Record<string, QueryValue>) =>
+    buildKey("/disbursements", params),
   disbursementsByLoan: (loanId: string) =>
     buildKey(`/disbursements/loan/${loanId}`),
   disbursement: (id: string) => buildKey(`/disbursements/${id}`),
 
   // Repayments
+  repayments: (params?: Record<string, QueryValue>) =>
+    buildKey("/repayments", params),
+  repayment: (id: string) => buildKey(`/repayments/${id}`),
   repaymentsByLoan: (loanId: string) =>
     buildKey(`/repayments/loan/${loanId}`),
   parReport: () => buildKey("/repayments/reports/par"),
