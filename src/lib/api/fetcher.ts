@@ -1,11 +1,21 @@
+import { TOKEN_KEY } from "@/lib/auth/auth-context";
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://loan-ui-production.up.railway.app/api";
 
+function getAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const token = localStorage.getItem(TOKEN_KEY);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function fetcher<T>(url: string): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(url);
+    res = await fetch(url, {
+      headers: { ...getAuthHeaders() },
+    });
   } catch (e) {
     const error = new Error("Network error");
     (error as any).status = 0;
@@ -13,6 +23,12 @@ export async function fetcher<T>(url: string): Promise<T> {
     throw error;
   }
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem("loanflow_user");
+      window.location.href = "/login";
+      throw new Error("Session expired");
+    }
     const error = new Error("API request failed");
     (error as any).status = res.status;
     (error as any).info = await res.json().catch(() => null);
@@ -40,7 +56,11 @@ async function request<T>(
   let res: Response;
   try {
     res = await fetch(`${API_BASE_URL}${path}`, {
-      headers: { "Content-Type": "application/json", ...options?.headers },
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+        ...options?.headers,
+      },
       ...options,
     });
   } catch (e) {
@@ -50,6 +70,12 @@ async function request<T>(
     throw error;
   }
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem("loanflow_user");
+      window.location.href = "/login";
+      throw new Error("Session expired");
+    }
     const error = new Error("API request failed");
     (error as any).status = res.status;
     (error as any).info = await res.json().catch(() => null);

@@ -153,5 +153,16 @@
     "activeLoans": "Active Loans",
     "pendingApplications": "Pending Applications",
     "totalDisbursed": "Total Disbursed"
+  },
+  "login": {
+    "title": "Sign in",
+    "subtitle": "Management System",
+    "description": "Enter your credentials to access the dashboard",
+    "email": "Email Address",
+    "password": "Password",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "signOut": "Sign Out",
+    "footer": "Microfinance Management Platform"
   }
 }

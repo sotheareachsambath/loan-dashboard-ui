@@ -3,8 +3,9 @@ import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import type { Metadata } from "next";
-import AppShell from "@/components/layout/app-shell";
+import { AuthProvider } from "@/lib/auth/auth-context";
 import "../globals.css";
+import LayoutShell from "./layout-shell";
 
 export const metadata: Metadata = {
   title: "Loan Management System",
@@ -38,9 +39,11 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-full bg-gray-50">
         <NextIntlClientProvider messages={messages}>
-          <AppShell>
-            {children}
-          </AppShell>
+          <AuthProvider>
+            <LayoutShell>
+              {children}
+            </LayoutShell>
+          </AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>

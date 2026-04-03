@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { useSidebar } from "./sidebar-context";
+import { useAuth } from "@/lib/auth/auth-context";
 
 const navItems = [
   {
@@ -81,17 +82,27 @@ export default function Sidebar() {
   const t = useTranslations();
   const pathname = usePathname();
   const { collapsed } = useSidebar();
+  const { user, logout } = useAuth();
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   }
 
+  const initials = user
+    ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase() || "U"
+    : "U";
+
+  const displayName = user
+    ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email
+    : "User";
+
+  const displayEmail = user?.email ?? "";
+
   return (
     <aside
-      className={`fixed top-0 left-0 z-40 h-screen bg-[#0f1623] flex flex-col transition-all duration-300 ease-in-out ${
-        collapsed ? "w-[72px]" : "w-[260px]"
-      }`}
+      className={`fixed top-0 left-0 z-40 h-screen bg-[#0f1623] flex flex-col transition-all duration-300 ease-in-out ${collapsed ? "w-[72px]" : "w-[260px]"
+        }`}
     >
       {/* Logo area */}
       <div className={`flex items-center gap-3 h-16 border-b border-white/[0.06] ${collapsed ? "justify-center px-0" : "px-6"}`}>
@@ -125,18 +136,15 @@ export default function Sidebar() {
                 <Link
                   href={item.href}
                   title={collapsed ? t(item.translationKey) : undefined}
-                  className={`group flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                    collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"
-                  } ${
-                    active
+                  className={`group flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 ${collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"
+                    } ${active
                       ? "bg-white/[0.08] text-white shadow-sm shadow-black/10"
                       : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-200"
-                  }`}
+                    }`}
                 >
                   <span
-                    className={`flex-shrink-0 transition-colors duration-150 ${
-                      active ? "text-blue-400" : "text-gray-500 group-hover:text-gray-400"
-                    }`}
+                    className={`flex-shrink-0 transition-colors duration-150 ${active ? "text-blue-400" : "text-gray-500 group-hover:text-gray-400"
+                      }`}
                   >
                     {item.icon}
                   </span>
@@ -155,19 +163,45 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      {/* Bottom section */}
+      {/* Bottom section — user info + logout */}
       <div className="px-3 py-4 border-t border-white/[0.06]">
         <div className={`flex items-center gap-3 ${collapsed ? "justify-center px-0" : "px-2"}`}>
           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-[11px] font-bold text-white shadow-lg shadow-blue-500/20">
-            A
+            {initials}
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-gray-200 truncate">Admin User</p>
-              <p className="text-[10px] text-gray-500 truncate">admin@loanflow.com</p>
+              <p className="text-[12px] font-medium text-gray-200 truncate">{displayName}</p>
+              <p className="text-[10px] text-gray-500 truncate">{displayEmail}</p>
             </div>
           )}
+          {!collapsed && (
+            <button
+              onClick={logout}
+              title={t("login.signOut")}
+              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-white/[0.06] hover:text-red-400 transition-colors duration-150 cursor-pointer"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+          )}
         </div>
+        {collapsed && (
+          <button
+            onClick={logout}
+            title={t("login.signOut")}
+            className="mt-3 w-full flex items-center justify-center py-2 rounded-lg text-gray-500 hover:bg-white/[0.06] hover:text-red-400 transition-colors duration-150 cursor-pointer"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+          </button>
+        )}
       </div>
     </aside>
   );
