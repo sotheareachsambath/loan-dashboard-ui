@@ -23,15 +23,17 @@ export default function DisbursementsPage() {
     const [page, setPage] = useState(1);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [cancelId, setCancelId] = useState<string | null>(null);
+    const [canceling, setCanceling] = useState(false);
 
     const { data: raw, error, isLoading, mutate } = useDisbursements({
         page,
         limit: 10,
     });
 
-    const disbursements = raw?.data ?? [];
-    const total = raw?.meta?.total ?? 0;
-    const totalPages = raw?.meta?.totalPages ?? 0;
+    const disbursements: any[] = (raw as any)?.disbursements ?? raw?.data ?? [];
+    const total = (raw as any)?.count ?? raw?.meta?.total ?? 0;
+    const totalPages = raw?.meta?.totalPages ?? (total > 0 ? Math.ceil(total / 10) : 0);
 
     async function handleDelete() {
         if (!deleteId) return;
@@ -44,6 +46,20 @@ export default function DisbursementsPage() {
             // error handling
         } finally {
             setDeleting(false);
+        }
+    }
+
+    async function handleCancel() {
+        if (!cancelId) return;
+        setCanceling(true);
+        try {
+            await api.patch(`/disbursements/${cancelId}/cancel`);
+            setCancelId(null);
+            mutate();
+        } catch {
+            // error handling
+        } finally {
+            setCanceling(false);
         }
     }
 
@@ -153,6 +169,14 @@ export default function DisbursementsPage() {
                                         >
                                             View
                                         </Link>
+                                        {d.status === "PENDING" && (
+                                            <button
+                                                onClick={() => setCancelId(d.id)}
+                                                className="font-medium text-orange-500 hover:text-orange-700 transition-colors"
+                                            >
+                                                {t("common.cancel")}
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => setDeleteId(d.id)}
                                             className="font-medium text-red-500 hover:text-red-700 transition-colors"
@@ -231,6 +255,37 @@ export default function DisbursementsPage() {
                                 {t("common.loading")}
                             </span>
                         ) : t("common.delete")}
+                    </button>
+                </div>
+            </Modal>
+
+            {/* Cancel Confirmation Modal */}
+            <Modal
+                open={!!cancelId}
+                onClose={() => setCancelId(null)}
+                title={t("common.confirm")}
+            >
+                <p className="mb-6 text-sm text-gray-600">
+                    Are you sure you want to cancel this disbursement? This action cannot be undone.
+                </p>
+                <div className="flex justify-end gap-3">
+                    <button
+                        onClick={() => setCancelId(null)}
+                        className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                        {t("common.cancel")}
+                    </button>
+                    <button
+                        onClick={handleCancel}
+                        disabled={canceling}
+                        className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50 transition-colors shadow-lg shadow-orange-500/20"
+                    >
+                        {canceling ? (
+                            <span className="flex items-center gap-2">
+                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                {t("common.loading")}
+                            </span>
+                        ) : "Confirm Cancel"}
                     </button>
                 </div>
             </Modal>

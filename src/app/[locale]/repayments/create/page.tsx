@@ -55,10 +55,14 @@ export default function RecordRepaymentPage() {
             await api.post("/repayments", { ...formData, collectedById });
             router.push("/repayments");
         } catch (err: unknown) {
-            if (err instanceof Error) {
-                setError(err.message || "Failed to record payment");
+            const message = err instanceof Error ? err.message : "Failed to record payment";
+            const infoMsg = (err as any)?.info?.message;
+            if (typeof infoMsg === "string" && infoMsg) {
+                setError(infoMsg);
+            } else if (Array.isArray(infoMsg) && infoMsg.length > 0) {
+                setError(infoMsg.join(", "));
             } else {
-                setError("Failed to record payment");
+                setError(message);
             }
         } finally {
             setIsSubmitting(false);

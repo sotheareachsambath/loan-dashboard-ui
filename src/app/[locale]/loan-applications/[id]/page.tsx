@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { useLoanApplication, useApprovalHistory, useLoanDocuments, useUsers } from "@/lib/api/hooks";
+import { useLoanApplication, useApprovalHistory, useLoanDocuments, useUsers, useRepaymentSchedule, useRepaymentsByLoan } from "@/lib/api/hooks";
 import { api } from "@/lib/api/fetcher";
 import { useAuth } from "@/lib/auth/auth-context";
 import StatusBadge from "@/components/ui/status-badge";
@@ -33,6 +33,10 @@ export default function LoanApplicationDetailsPage({
     const { data: documents } = useLoanDocuments(id);
     const { data: officersData } = useUsers({ role: "LOAN_OFFICER", limit: 100 });
     const officers = officersData?.data ?? [];
+    const { data: rawSchedule, mutate: mutateSchedule } = useRepaymentSchedule(id);
+    const schedule = Array.isArray(rawSchedule) ? rawSchedule : ((rawSchedule as any)?.data ?? []);
+    const { data: rawRepayments } = useRepaymentsByLoan(id);
+    const loanRepayments = Array.isArray(rawRepayments) ? rawRepayments : ((rawRepayments as any)?.data ?? []);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [actionModal, setActionModal] = useState<"approve" | "reject" | "return" | "assign" | null>(null);
@@ -102,6 +106,22 @@ export default function LoanApplicationDetailsPage({
         }
     };
 
+    const handleGenerateSchedule = async () => {
+        setIsSubmitting(true);
+        setActionError("");
+        try {
+            await api.post(`/repayment-schedules/generate`, { loanApplicationId: id });
+            mutateSchedule();
+        } catch (err: unknown) {
+            const message =
+                err instanceof Error ? err.message : "Failed to generate schedule";
+            const info = (err as { info?: { message?: string } })?.info?.message;
+            setActionError(info || message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex h-64 items-center justify-center bg-white rounded-2xl shadow-sm border border-gray-200">
@@ -131,7 +151,7 @@ export default function LoanApplicationDetailsPage({
                 <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm flex items-center justify-between">
                     <span>{actionError}</span>
                     <button onClick={() => setActionError("")} className="text-red-400 hover:text-red-600 ml-4">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                     </button>
                 </div>
             )}
@@ -264,6 +284,89 @@ export default function LoanApplicationDetailsPage({
                             ) : (
                                 <div className="text-center py-10">
                                     <p className="text-sm text-gray-500">No documents uploaded yet.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Repayment Schedule */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mt-6">
+                        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+                            <h2 className="text-lg font-medium text-gray-900">Repayment Schedule</h2>
+                            {(!schedule || schedule.length === 0) && (
+                                <button onClick={handleGenerateSchedule} disabled={isSubmitting} className="text-sm font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50 transition-colors">
+                                    {isSubmitting ? "Generating..." : "+ Generate Schedule"}
+                                </button>
+                            )}
+                        </div>
+                        <div className="p-0 overflow-x-auto">
+                            {schedule && schedule.length > 0 ? (
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50/50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">No.</th>
+                                            <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th className="px-6 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Principal</th>
+                                            <th className="px-6 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Interest</th>
+                                            <th className="px-6 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                                            <th className="px-6 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {schedule.map((installment: any) => (
+                                            <tr key={installment.id || installment.installmentNumber} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{installment.installmentNumber}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(installment.dueDate).toLocaleDateString()}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{formatCurrency(installment.principalAmount, application.currency || "USD")}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{formatCurrency(installment.interestAmount, application.currency || "USD")}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">{formatCurrency(installment.totalAmount, application.currency || "USD")}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                                    <StatusBadge status={installment.status || "PENDING"} />
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="p-6 text-center">
+                                    <p className="text-sm text-gray-500">No repayment schedule generated yet.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Payment History */}
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mt-6">
+                        <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
+                            <h2 className="text-lg font-medium text-gray-900">Payment History</h2>
+                        </div>
+                        <div className="p-0 overflow-x-auto">
+                            {loanRepayments && loanRepayments.length > 0 ? (
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50/50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th className="px-6 py-3 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+                                            <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Method</th>
+                                            <th className="px-6 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Reference</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {loanRepayments.map((rep: any) => (
+                                            <tr key={rep.id} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(rep.createdAt).toLocaleDateString()}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">{formatCurrency(rep.amount, application.currency || "USD")}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap"><span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">{rep.repaymentType}</span></td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{rep.paymentMethod}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{rep.referenceNumber || "—"}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="p-6 text-center">
+                                    <p className="text-sm text-gray-500">No payment history available.</p>
                                 </div>
                             )}
                         </div>
