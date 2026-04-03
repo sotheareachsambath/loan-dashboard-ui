@@ -6,16 +6,17 @@ import { useSidebar } from "./sidebar-context";
 
 export default function Header() {
   const t = useTranslations();
-  const { toggle, collapsed } = useSidebar();
+  const { toggle, collapsed, toggleMobile } = useSidebar();
 
   return (
     <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-200/60">
       <div className="flex items-center justify-between h-full px-6 lg:px-8">
         {/* Left: Toggle + title */}
         <div className="flex items-center gap-3">
+          {/* Desktop Toggle */}
           <button
             onClick={toggle}
-            className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors duration-150 cursor-pointer"
+            className="hidden lg:flex items-center justify-center w-9 h-9 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors duration-150 cursor-pointer"
             aria-label="Toggle sidebar"
           >
             {collapsed ? (
@@ -31,8 +32,22 @@ export default function Header() {
               </svg>
             )}
           </button>
+
+          {/* Mobile Toggle */}
+          <button
+            onClick={toggleMobile}
+            className="flex lg:hidden items-center justify-center w-9 h-9 rounded-lg text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors duration-150 cursor-pointer"
+            aria-label="Open sidebar"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
           <h1 className="text-[15px] font-semibold text-gray-900">
-            {t("common.appName")}
+            <span className="hidden sm:inline">{t("common.appName")}</span>
+            <span className="sm:hidden">LMS</span>
           </h1>
         </div>
 

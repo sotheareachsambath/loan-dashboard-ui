@@ -81,7 +81,7 @@ const navItems = [
 export default function Sidebar() {
   const t = useTranslations();
   const pathname = usePathname();
-  const { collapsed } = useSidebar();
+  const { collapsed, isMobileOpen, toggleMobile } = useSidebar();
   const { user, logout } = useAuth();
 
   function isActive(href: string) {
@@ -101,8 +101,10 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-40 h-screen bg-[#0f1623] flex flex-col transition-all duration-300 ease-in-out ${collapsed ? "w-[72px]" : "w-[260px]"
-        }`}
+      className={`fixed top-0 left-0 z-40 h-screen bg-[#0f1623] flex flex-col transition-all duration-300 ease-in-out
+        ${isMobileOpen ? "translate-x-0 w-[260px] shadow-2xl shadow-black/50" : "-translate-x-full lg:translate-x-0"}
+        ${collapsed ? "lg:w-[72px]" : "lg:w-[260px]"}
+      `}
     >
       {/* Logo area */}
       <div className={`flex items-center gap-3 h-16 border-b border-white/[0.06] ${collapsed ? "justify-center px-0" : "px-6"}`}>
@@ -116,7 +118,10 @@ export default function Sidebar() {
         {!collapsed && (
           <div className="overflow-hidden">
             <p className="text-[13px] font-semibold text-white leading-none whitespace-nowrap">LoanFlow</p>
-            <p className="text-[10px] text-gray-500 mt-0.5 whitespace-nowrap">Management System</p>
+            <p className="text-[10px] text-gray-500 mt-0.5 whitespace-nowrap">
+              <span className="hidden sm:inline">Management System</span>
+              <span className="sm:hidden">LMS</span>
+            </p>
           </div>
         )}
       </div>
@@ -135,8 +140,11 @@ export default function Sidebar() {
               <li key={item.key}>
                 <Link
                   href={item.href}
+                  onClick={() => {
+                    if (isMobileOpen) toggleMobile();
+                  }}
                   title={collapsed ? t(item.translationKey) : undefined}
-                  className={`group flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 ${collapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"
+                  className={`group flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 ${collapsed ? "lg:justify-center lg:px-0 px-3 py-2.5" : "gap-3 px-3 py-2.5"
                     } ${active
                       ? "bg-white/[0.08] text-white shadow-sm shadow-black/10"
                       : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-200"
@@ -148,13 +156,11 @@ export default function Sidebar() {
                   >
                     {item.icon}
                   </span>
-                  {!collapsed && (
-                    <>
-                      <span className="whitespace-nowrap overflow-hidden">{t(item.translationKey)}</span>
-                      {active && (
-                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-sm shadow-blue-400/50" />
-                      )}
-                    </>
+                  <span className={`whitespace-nowrap overflow-hidden transition-all duration-300 ${collapsed ? "lg:hidden" : ""}`}>
+                    {t(item.translationKey)}
+                  </span>
+                  {active && (
+                    <span className={`ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-sm shadow-blue-400/50 ${collapsed ? "lg:hidden" : ""}`} />
                   )}
                 </Link>
               </li>
@@ -165,35 +171,18 @@ export default function Sidebar() {
 
       {/* Bottom section — user info + logout */}
       <div className="px-3 py-4 border-t border-white/[0.06]">
-        <div className={`flex items-center gap-3 ${collapsed ? "justify-center px-0" : "px-2"}`}>
+        <div className={`flex items-center gap-3 ${collapsed ? "lg:justify-center lg:px-0 px-2" : "px-2"}`}>
           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-[11px] font-bold text-white shadow-lg shadow-blue-500/20">
             {initials}
           </div>
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-medium text-gray-200 truncate">{displayName}</p>
-              <p className="text-[10px] text-gray-500 truncate">{displayEmail}</p>
-            </div>
-          )}
-          {!collapsed && (
-            <button
-              onClick={logout}
-              title={t("login.signOut")}
-              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-white/[0.06] hover:text-red-400 transition-colors duration-150 cursor-pointer"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </button>
-          )}
-        </div>
-        {collapsed && (
+          <div className={`flex-1 min-w-0 transition-all duration-300 ${collapsed ? "lg:hidden" : ""}`}>
+            <p className="text-[12px] font-medium text-gray-200 truncate">{displayName}</p>
+            <p className="text-[10px] text-gray-500 truncate">{displayEmail}</p>
+          </div>
           <button
             onClick={logout}
             title={t("login.signOut")}
-            className="mt-3 w-full flex items-center justify-center py-2 rounded-lg text-gray-500 hover:bg-white/[0.06] hover:text-red-400 transition-colors duration-150 cursor-pointer"
+            className={`flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-white/[0.06] hover:text-red-400 transition-colors duration-150 cursor-pointer ${collapsed ? "lg:hidden" : ""}`}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -201,7 +190,19 @@ export default function Sidebar() {
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
           </button>
-        )}
+        </div>
+        {/* Sign Out Button Icon for Collapsed Desktop State */}
+        <button
+          onClick={logout}
+          title={t("login.signOut")}
+          className={`mt-3 w-full items-center justify-center py-2 rounded-lg text-gray-500 hover:bg-white/[0.06] hover:text-red-400 transition-colors duration-150 cursor-pointer hidden ${collapsed ? "lg:flex" : ""}`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
       </div>
     </aside>
   );

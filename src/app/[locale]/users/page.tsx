@@ -55,7 +55,8 @@ export default function UsersPage() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/" className="text-xl font-bold text-gray-900">
-                {t("common.appName")}
+                <span className="hidden sm:inline">{t("common.appName")}</span>
+                <span className="sm:hidden">LMS</span>
               </Link>
               <span className="text-gray-300">/</span>
               <span className="text-gray-600">{t("nav.users")}</span>
@@ -216,11 +217,10 @@ export default function UsersPage() {
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`rounded-md border px-3 py-1 text-sm ${
-                      p === page
+                    className={`rounded-md border px-3 py-1 text-sm ${p === page
                         ? "border-blue-600 bg-blue-600 text-white"
                         : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     {p}
                   </button>

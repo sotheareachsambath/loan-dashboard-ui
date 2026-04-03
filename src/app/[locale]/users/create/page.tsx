@@ -15,7 +15,8 @@ export default function CreateUserPage() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/" className="text-xl font-bold text-gray-900">
-                {t("common.appName")}
+                <span className="hidden sm:inline">{t("common.appName")}</span>
+                <span className="sm:hidden">LMS</span>
               </Link>
               <span className="text-gray-300">/</span>
               <Link href="/users" className="text-gray-600 hover:text-gray-900">

@@ -78,7 +78,8 @@ export default function LoginPage() {
                         LoanFlow
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">
-                        {t("login.subtitle")}
+                        <span className="hidden sm:inline">{t("login.subtitle")}</span>
+                        <span className="sm:hidden">LMS</span>
                     </p>
                 </div>
 

@@ -143,7 +143,10 @@ export default function DashboardPage() {
       <div className="mb-10">
         <p className="text-[11px] font-medium tracking-widest uppercase text-gray-400 mb-2">Overview</p>
         <h2 className="text-2xl font-semibold text-gray-900 mb-1">{t("dashboard.title")}</h2>
-        <p className="text-sm text-gray-500">{t("dashboard.welcome")}</p>
+        <p className="text-sm text-gray-500">
+          <span className="hidden sm:inline">{t("dashboard.welcome")}</span>
+          <span className="sm:hidden">Welcome to the LMS</span>
+        </p>
       </div>
 
       {/* Stat cards */}
