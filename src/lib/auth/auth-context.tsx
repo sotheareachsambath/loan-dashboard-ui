@@ -58,23 +58,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
 
-    // Hydrate from localStorage on mount
+    // Hydrate from localStorage, then verify with /api/auth/me
     useEffect(() => {
-        try {
-            const storedToken = localStorage.getItem(TOKEN_KEY);
-            const storedUser = localStorage.getItem(USER_KEY);
+        const storedToken = localStorage.getItem(TOKEN_KEY);
 
-            if (storedToken && storedUser) {
-                setToken(storedToken);
-                setUser(JSON.parse(storedUser));
-            }
-        } catch {
-            // Invalid stored data – clear it
-            localStorage.removeItem(TOKEN_KEY);
-            localStorage.removeItem(USER_KEY);
-        } finally {
+        if (!storedToken) {
             setIsLoading(false);
+            return;
         }
+
+        // Set token immediately so UI can render while we verify
+        setToken(storedToken);
+
+        // Try loading cached user first for fast render
+        try {
+            const storedUser = localStorage.getItem(USER_KEY);
+            if (storedUser) setUser(JSON.parse(storedUser));
+        } catch {
+            // ignore bad cache
+        }
+
+        // Verify token & fetch fresh user data from /api/auth/me
+        fetch(`${API_BASE_URL}/auth/me`, {
+            headers: { Authorization: `Bearer ${storedToken}` },
+        })
+            .then(async (res) => {
+                if (!res.ok) throw new Error("Invalid session");
+                const freshUser: AuthUser = await res.json();
+                setUser(freshUser);
+                localStorage.setItem(USER_KEY, JSON.stringify(freshUser));
+            })
+            .catch(() => {
+                // Token is invalid/expired — clear everything
+                localStorage.removeItem(TOKEN_KEY);
+                localStorage.removeItem(USER_KEY);
+                setToken(null);
+                setUser(null);
+            })
+            .finally(() => {
+                setIsLoading(false);
+            });
     }, []);
 
     // Redirect to login when not authenticated (after hydration)

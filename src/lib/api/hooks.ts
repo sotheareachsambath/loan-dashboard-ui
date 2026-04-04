@@ -12,6 +12,9 @@ import type {
   UserQueryParams,
   LoanProductQueryParams,
   LoanApplicationQueryParams,
+  RepaymentListResponse,
+  ParReportResponse,
+  ScheduleSummaryResponse,
 } from "../types";
 
 function useAPI<T>(key: string | null, config?: SWRConfiguration) {
@@ -61,7 +64,7 @@ export function useLoanDocuments(loanId: string | null) {
 // ── Repayment Schedules ────────────────────────────────
 
 export function useRepaymentSchedule(loanId: string | null) {
-  return useAPI<RepaymentSchedule[]>(
+  return useAPI<ScheduleSummaryResponse>(
     loanId ? endpoints.repaymentSchedule(loanId) : null
   );
 }
@@ -86,10 +89,9 @@ export function useDisbursement(id: string | null) {
 
 // ── Repayments ─────────────────────────────────────────
 
-export function useRepayments(params?: { page?: number; limit?: number }) {
-  return useAPI<PaginatedResponse<Repayment>>(
-    endpoints.repayments(params && { ...params })
-  );
+// API returns { repayments, totalPaid, count } — NOT paginated
+export function useRepayments() {
+  return useAPI<RepaymentListResponse>(endpoints.repayments());
 }
 
 export function useRepayment(id: string | null) {
@@ -97,11 +99,11 @@ export function useRepayment(id: string | null) {
 }
 
 export function useRepaymentsByLoan(loanId: string | null) {
-  return useAPI<Repayment[]>(
+  return useAPI<RepaymentListResponse>(
     loanId ? endpoints.repaymentsByLoan(loanId) : null
   );
 }
 
 export function useParReport() {
-  return useAPI<unknown>(endpoints.parReport());
+  return useAPI<ParReportResponse>(endpoints.parReport());
 }

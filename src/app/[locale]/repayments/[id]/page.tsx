@@ -5,10 +5,10 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { useRepayment } from "@/lib/api/hooks";
 
-function formatCurrency(amount: number) {
+function formatCurrency(amount: number, currency: string = "USD") {
     return new Intl.NumberFormat("en-US", {
         style: "currency",
-        currency: "USD",
+        currency,
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
     }).format(amount);
@@ -45,6 +45,13 @@ export default function RepaymentDetailPage({ params }: { params: Promise<{ id: 
         );
     }
 
+    const currency = repayment.loanApplication?.currency || "USD";
+    const collectorName = repayment.collectedBy
+        ? `${repayment.collectedBy.firstName} ${repayment.collectedBy.lastName}`
+        : repayment.collectedById?.slice(0, 8) || "Unknown";
+
+    const hasPortion = repayment.principalPortion != null || repayment.interestPortion != null || repayment.penaltyPortion != null;
+
     return (
         <div className="max-w-4xl mx-auto">
             {/* Header */}
@@ -59,7 +66,9 @@ export default function RepaymentDetailPage({ params }: { params: Promise<{ id: 
                             {t(`repayments.types.${repayment.repaymentType}`)}
                         </span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">Recorded on {new Date(repayment.createdAt).toLocaleDateString()}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Recorded on {new Date(repayment.paidAt || repayment.createdAt).toLocaleDateString()}
+                    </p>
                 </div>
             </div>
 
@@ -68,9 +77,51 @@ export default function RepaymentDetailPage({ params }: { params: Promise<{ id: 
                 <div className="p-6 md:p-8">
                     {/* Amount highlight */}
                     <div className="text-center pb-8 border-b border-gray-100">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Payment Amount</p>
-                        <p className="text-4xl font-bold text-gray-900">{formatCurrency(repayment.amount)}</p>
+                        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Total Payment Amount</p>
+                        <p className="text-4xl font-bold text-gray-900">{formatCurrency(repayment.amount, currency)}</p>
                     </div>
+
+                    {/* Payment Allocation Breakdown */}
+                    {hasPortion && (
+                        <div className="py-6 border-b border-gray-100">
+                            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4">Payment Allocation (Penalty → Interest → Principal)</h3>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="bg-blue-50/70 rounded-xl p-4 border border-blue-100">
+                                    <p className="text-xs font-medium text-blue-600 mb-1">Principal Portion</p>
+                                    <p className="text-xl font-bold text-blue-900">
+                                        {formatCurrency(repayment.principalPortion || 0, currency)}
+                                    </p>
+                                    {repayment.amount > 0 && (
+                                        <p className="text-xs text-blue-500 mt-1">
+                                            {Math.round(((repayment.principalPortion || 0) / repayment.amount) * 100)}% of total
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="bg-amber-50/70 rounded-xl p-4 border border-amber-100">
+                                    <p className="text-xs font-medium text-amber-600 mb-1">Interest Portion</p>
+                                    <p className="text-xl font-bold text-amber-900">
+                                        {formatCurrency(repayment.interestPortion || 0, currency)}
+                                    </p>
+                                    {repayment.amount > 0 && (
+                                        <p className="text-xs text-amber-500 mt-1">
+                                            {Math.round(((repayment.interestPortion || 0) / repayment.amount) * 100)}% of total
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="bg-red-50/70 rounded-xl p-4 border border-red-100">
+                                    <p className="text-xs font-medium text-red-600 mb-1">Penalty Portion</p>
+                                    <p className="text-xl font-bold text-red-900">
+                                        {formatCurrency(repayment.penaltyPortion || 0, currency)}
+                                    </p>
+                                    {repayment.amount > 0 && (
+                                        <p className="text-xs text-red-500 mt-1">
+                                            {Math.round(((repayment.penaltyPortion || 0) / repayment.amount) * 100)}% of total
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-8">
                         <div>
@@ -79,8 +130,14 @@ export default function RepaymentDetailPage({ params }: { params: Promise<{ id: 
                                 href={`/loan-applications/${repayment.loanApplicationId}`}
                                 className="text-sm font-medium text-blue-600 hover:text-blue-800"
                             >
-                                #{repayment.loanApplicationId.slice(0, 8)}
+                                {repayment.loanApplication?.applicationNumber
+                                    ? `#${repayment.loanApplication.applicationNumber}`
+                                    : `#${repayment.loanApplicationId.slice(0, 8)}`
+                                }
                             </Link>
+                            {repayment.loanApplication?.status && (
+                                <p className="text-xs text-gray-500 mt-0.5">{repayment.loanApplication.status}</p>
+                            )}
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">{t("repayments.type")}</p>
@@ -88,19 +145,21 @@ export default function RepaymentDetailPage({ params }: { params: Promise<{ id: 
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">{t("repayments.paymentMethod")}</p>
-                            <p className="text-sm font-medium text-gray-900">{repayment.paymentMethod.replace(/_/g, " ")}</p>
+                            <p className="text-sm font-medium text-gray-900">
+                                {repayment.paymentMethod === "CASH" ? "Cash" : repayment.paymentMethod === "BANK_TRANSFER" ? "Bank Transfer" : repayment.paymentMethod.replace(/_/g, " ")}
+                            </p>
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">{t("repayments.reference")}</p>
-                            <p className="text-sm font-medium text-gray-900">{repayment.referenceNumber || "—"}</p>
+                            <p className="text-sm font-medium text-gray-900">{repayment.referenceNumber || "\u2014"}</p>
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Collected By</p>
-                            <p className="text-sm font-medium text-gray-900">{repayment.collectedById.slice(0, 8)}</p>
+                            <p className="text-sm font-medium text-gray-900">{collectorName}</p>
                         </div>
                         <div>
                             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">Date</p>
-                            <p className="text-sm font-medium text-gray-900">{new Date(repayment.createdAt).toLocaleString()}</p>
+                            <p className="text-sm font-medium text-gray-900">{new Date(repayment.paidAt || repayment.createdAt).toLocaleString()}</p>
                         </div>
                     </div>
 

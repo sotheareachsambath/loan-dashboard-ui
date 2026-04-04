@@ -187,6 +187,7 @@ export interface RepaymentSchedule {
   interestAmount: number;
   totalAmount: number;
   paidAmount: number;
+  remainingAmount?: number;
   status: string;
 }
 
@@ -224,11 +225,84 @@ export interface Repayment {
   loanApplicationId: string;
   collectedById: string;
   amount: number;
+  principalPortion: number;
+  interestPortion: number;
+  penaltyPortion: number;
   repaymentType: RepaymentType;
   paymentMethod: string;
   referenceNumber?: string;
   notes?: string;
+  paidAt?: string;
   createdAt: string;
+  collectedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  loanApplication?: {
+    id: string;
+    applicationNumber?: string;
+    status: string;
+    currency: Currency;
+  };
+}
+
+export interface RepaymentAllocation {
+  principalPaid: number;
+  interestPaid: number;
+  penaltyPaid: number;
+  totalPaid: number;
+  schedulesAffected: number;
+}
+
+export interface RepaymentCreateResponse {
+  repayment: Repayment;
+  allocation: RepaymentAllocation;
+}
+
+export interface RepaymentListResponse {
+  repayments: Repayment[];
+  totalPaid: number;
+  count: number;
+}
+
+export interface ParReportResponse {
+  reportDate: string;
+  portfolio: {
+    totalOutstanding: number;
+    totalActiveLoans: number;
+  };
+  par: {
+    below30: { count: number; amount: number; loans: ParLoan[] };
+    par30: { count: number; amount: number; ratio: number; loans: ParLoan[] };
+    par60: { count: number; amount: number; ratio: number; loans: ParLoan[] };
+    par90: { count: number; amount: number; ratio: number; loans: ParLoan[] };
+  };
+  summary: {
+    totalOverdueLoans: number;
+    par30PlusRate: string;
+  };
+}
+
+export interface ParLoan {
+  loanApplicationId: string;
+  applicationNumber?: string;
+  applicant?: { id: string; firstName: string; lastName: string };
+  outstandingAmount: number;
+  currency: Currency;
+  daysPastDue: number;
+  overdueAmount: number;
+}
+
+export interface ScheduleSummaryResponse {
+  loanApplicationId: string;
+  totalInstallments: number;
+  totalPrincipal: number;
+  totalInterest: number;
+  totalAmount: number;
+  totalPaid: number;
+  totalRemaining: number;
+  schedules: RepaymentSchedule[];
 }
 
 export interface CreateRepaymentDto {

@@ -5,12 +5,22 @@ import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { useSidebar } from "./sidebar-context";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useRole } from "@/lib/hooks/use-role";
+import type { UserRole } from "@/lib/types";
 
-const navItems = [
+interface NavItem {
+  key: string;
+  href: string;
+  translationKey: string;
+  icon: React.ReactNode;
+  minRole?: UserRole[];
+}
+
+const navItems: NavItem[] = [
   {
     key: "dashboard",
     href: "/",
-    translationKey: "nav.dashboard" as const,
+    translationKey: "nav.dashboard",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -20,22 +30,24 @@ const navItems = [
       </svg>
     ),
   },
-  {
-    key: "users",
-    href: "/users",
-    translationKey: "nav.users" as const,
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-  },
+  // {
+  //   key: "users",
+  //   href: "/users",
+  //   translationKey: "nav.users",
+  //   minRole: ["ADMIN", "DIRECTOR", "MANAGER"],
+  //   icon: (
+  //     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+  //       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+  //       <circle cx="9" cy="7" r="4" />
+  //       <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+  //     </svg>
+  //   ),
+  // },
   {
     key: "loan-products",
     href: "/loan-products",
-    translationKey: "nav.loanProducts" as const,
+    translationKey: "nav.loanProducts",
+    minRole: ["ADMIN", "DIRECTOR", "MANAGER"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="7" width="20" height="14" rx="2" />
@@ -46,7 +58,7 @@ const navItems = [
   {
     key: "loan-applications",
     href: "/loan-applications",
-    translationKey: "nav.loanApplications" as const,
+    translationKey: "nav.loanApplications",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -57,7 +69,8 @@ const navItems = [
   {
     key: "disbursements",
     href: "/disbursements",
-    translationKey: "nav.disbursements" as const,
+    translationKey: "nav.disbursements",
+    minRole: ["ADMIN", "DIRECTOR", "MANAGER", "LOAN_OFFICER", "TELLER"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <line x1="12" y1="1" x2="12" y2="23" />
@@ -68,7 +81,8 @@ const navItems = [
   {
     key: "repayments",
     href: "/repayments",
-    translationKey: "nav.repayments" as const,
+    translationKey: "nav.repayments",
+    minRole: ["ADMIN", "DIRECTOR", "MANAGER", "LOAN_OFFICER", "TELLER"],
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
@@ -83,6 +97,13 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { collapsed, isMobileOpen, toggleMobile } = useSidebar();
   const { user, logout } = useAuth();
+  const { role } = useRole();
+
+  // Filter nav items based on role
+  const visibleItems = navItems.filter((item) => {
+    if (!item.minRole) return true; // visible to everyone
+    return item.minRole.includes(role);
+  });
 
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
@@ -134,7 +155,7 @@ export default function Sidebar() {
           </p>
         )}
         <ul className="space-y-0.5">
-          {navItems.map((item) => {
+          {visibleItems.map((item) => {
             const active = isActive(item.href);
             return (
               <li key={item.key}>
@@ -169,7 +190,7 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      {/* Bottom section — user info + logout */}
+      {/* Bottom section */}
       <div className="px-3 py-4 border-t border-white/[0.06]">
         <div className={`flex items-center gap-3 ${collapsed ? "lg:justify-center lg:px-0 px-2" : "px-2"}`}>
           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-[11px] font-bold text-white shadow-lg shadow-blue-500/20">
@@ -191,7 +212,6 @@ export default function Sidebar() {
             </svg>
           </button>
         </div>
-        {/* Sign Out Button Icon for Collapsed Desktop State */}
         <button
           onClick={logout}
           title={t("login.signOut")}

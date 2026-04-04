@@ -22,9 +22,10 @@ export default function CreateDisbursementPage() {
     const router = useRouter();
     const { user } = useAuth();
 
-    // Fetch approved applications eligible for disbursement
-    const { data: applicationsRaw } = useLoanApplications({ status: "APPROVED", limit: 100 });
-    const applications = applicationsRaw?.data ?? [];
+    // Fetch approved and disbursed (partial) applications eligible for disbursement
+    const { data: approvedRaw } = useLoanApplications({ status: "APPROVED", limit: 100 });
+    const { data: disbursedRaw } = useLoanApplications({ status: "DISBURSED", limit: 100 });
+    const applications = [...(approvedRaw?.data ?? []), ...(disbursedRaw?.data ?? [])];
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
@@ -182,15 +183,16 @@ export default function CreateDisbursementPage() {
                             </select>
                         </div>
 
-                        {/* Bank Name (conditional) */}
+                        {/* Bank Name (conditional - required for BANK_TRANSFER) */}
                         {showBankFields && (
                             <>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-900 mb-2">
-                                        {t("disbursements.bankName")}
+                                        {t("disbursements.bankName")} *
                                     </label>
                                     <input
                                         type="text"
+                                        required
                                         value={formData.bankName}
                                         onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
                                         className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
@@ -199,10 +201,11 @@ export default function CreateDisbursementPage() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-900 mb-2">
-                                        {t("disbursements.accountNumber")}
+                                        {t("disbursements.accountNumber")} *
                                     </label>
                                     <input
                                         type="text"
+                                        required
                                         value={formData.accountNumber}
                                         onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
                                         className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"

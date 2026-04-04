@@ -71,7 +71,8 @@ export default function CreateLoanApplicationPage() {
         }
     };
 
-    console.log("formData111", formData);
+    // Get selected product constraints
+    const selectedProduct = products?.find((p) => p.id === formData.loanProductId);
 
     return (
         <div className="max-w-3xl mx-auto">
@@ -165,6 +166,11 @@ export default function CreateLoanApplicationPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-900 mb-2">
                                 {t("loanApplications.requestedAmount")} *
+                                {selectedProduct && (
+                                    <span className="ml-1 text-xs font-normal text-gray-400">
+                                        ({selectedProduct.minAmount.toLocaleString()} - {selectedProduct.maxAmount.toLocaleString()} {selectedProduct.currency})
+                                    </span>
+                                )}
                             </label>
                             <div className="relative">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -173,7 +179,8 @@ export default function CreateLoanApplicationPage() {
                                 <input
                                     type="number"
                                     required
-                                    min={0}
+                                    min={selectedProduct?.minAmount ?? 1}
+                                    max={selectedProduct?.maxAmount ?? undefined}
                                     value={formData.requestedAmount || ""}
                                     onChange={(e) => setFormData({ ...formData, requestedAmount: Number(e.target.value) })}
                                     className="w-full rounded-xl border border-gray-300 bg-white pl-8 pr-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
@@ -185,11 +192,17 @@ export default function CreateLoanApplicationPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-900 mb-2">
                                 {t("loanApplications.interestRate")} (%) *
+                                {selectedProduct && (
+                                    <span className="ml-1 text-xs font-normal text-gray-400">
+                                        ({selectedProduct.minInterestRate}% - {selectedProduct.maxInterestRate}%)
+                                    </span>
+                                )}
                             </label>
                             <input
                                 type="number"
                                 required
-                                min={0}
+                                min={selectedProduct?.minInterestRate ?? 0}
+                                max={selectedProduct?.maxInterestRate ?? undefined}
                                 step="0.01"
                                 value={formData.interestRate || ""}
                                 onChange={(e) => setFormData({ ...formData, interestRate: Number(e.target.value) })}
@@ -201,11 +214,17 @@ export default function CreateLoanApplicationPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-900 mb-2">
                                 {t("loanApplications.termMonths")} *
+                                {selectedProduct && (
+                                    <span className="ml-1 text-xs font-normal text-gray-400">
+                                        ({selectedProduct.minTermMonths} - {selectedProduct.maxTermMonths} months)
+                                    </span>
+                                )}
                             </label>
                             <input
                                 type="number"
                                 required
-                                min={1}
+                                min={selectedProduct?.minTermMonths ?? 1}
+                                max={selectedProduct?.maxTermMonths ?? undefined}
                                 value={formData.termMonths || ""}
                                 onChange={(e) => setFormData({ ...formData, termMonths: Number(e.target.value) })}
                                 className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
