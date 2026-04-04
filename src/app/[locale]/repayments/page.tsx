@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { useRepayments, useParReport } from "@/lib/api/hooks";
+import { useRepayments, useRepaymentsByLoan, useParReport, useLoanApplications } from "@/lib/api/hooks";
 import { api } from "@/lib/api/fetcher";
 
 function formatCurrency(amount: number, currency: string = "USD") {
@@ -47,17 +47,26 @@ export default function RepaymentsPage() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [typeFilter, setTypeFilter] = useState<string>("");
+    const [loanFilter, setLoanFilter] = useState<string>("");
     const [updatingOverdue, setUpdatingOverdue] = useState(false);
 
+    // Fetch all loan applications for the filter dropdown
+    const { data: loansRaw } = useLoanApplications({ page: 1, limit: 200 });
+    const loanOptions = loansRaw?.data ?? [];
+
     // API returns { repayments, totalPaid, count } — NOT paginated
+    // If filtering by loan, use the loan-specific endpoint; otherwise fetch all
     const { data: raw, error, isLoading, mutate } = useRepayments();
-    const repayments = raw?.repayments ?? [];
-    const totalPaid = raw?.totalPaid ?? 0;
-    const count = raw?.count ?? 0;
+    const { data: rawByLoan } = useRepaymentsByLoan(loanFilter || null);
+
+    const activeData = loanFilter ? rawByLoan : raw;
+    const repayments = activeData?.repayments ?? [];
+    const totalPaid = activeData?.totalPaid ?? 0;
+    const count = activeData?.count ?? 0;
 
     const { data: parReport } = useParReport();
 
-    // Client-side filtering
+    // Client-side filtering (search + type on top of loan filter)
     const filtered = repayments.filter((r) => {
         const matchesSearch =
             !searchTerm ||
@@ -179,6 +188,29 @@ export default function RepaymentsPage() {
                             />
                         </div>
                         <select
+                            value={loanFilter}
+                            onChange={(e) => setLoanFilter(e.target.value)}
+                            className="px-4 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all max-w-[280px]"
+                        >
+                            <option value="">All Loans</option>
+                            {loanOptions.map((loan) => {
+                                const name = loan.applicant
+                                    ? `${loan.applicant.firstName} ${loan.applicant.lastName}`
+                                    : "Unknown";
+                                const amt = new Intl.NumberFormat("en-US", {
+                                    style: "currency",
+                                    currency: loan.currency || "USD",
+                                    minimumFractionDigits: 0,
+                                }).format(loan.requestedAmount);
+                                const date = new Date(loan.createdAt).toLocaleDateString();
+                                return (
+                                    <option key={loan.id} value={loan.id}>
+                                        {name} — {amt} — {date}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                        <select
                             value={typeFilter}
                             onChange={(e) => setTypeFilter(e.target.value)}
                             className="px-4 py-2 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
@@ -189,6 +221,14 @@ export default function RepaymentsPage() {
                             <option value="PREPAYMENT">Prepayment</option>
                             <option value="PENALTY">Penalty</option>
                         </select>
+                        {(loanFilter || typeFilter) && (
+                            <button
+                                onClick={() => { setLoanFilter(""); setTypeFilter(""); }}
+                                className="px-3 py-2 text-sm border border-gray-200 rounded-xl bg-white text-gray-500 hover:bg-gray-50 transition-colors"
+                            >
+                                Clear
+                            </button>
+                        )}
                     </div>
                 </div>
 
