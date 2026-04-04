@@ -144,7 +144,8 @@
       "EARLY_REPAYMENT": "សងមុនកាលកំណត់",
       "PREPAYMENT": "បង់មុន",
       "PENALTY": "ពិន័យ"
-    }
+    },
+    "fullBalance": "បងផ្ដាច់"
   },
   "dashboard": {
     "title": "ផ្ទាំងគ្រប់គ្រង",

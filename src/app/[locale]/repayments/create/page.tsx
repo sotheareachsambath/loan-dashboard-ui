@@ -369,6 +369,11 @@ export default function RecordRepaymentPage() {
                                         (max: {formatCurrency(scheduleInfo.totalRemaining, currency)})
                                     </span>
                                 )}
+                                {!hasFixedTerm && selectedApp && (
+                                    <span className="ml-1 text-xs font-normal text-gray-400">
+                                        (remaining: {formatCurrency(Math.max(0, (selectedApp.approvedAmount || selectedApp.requestedAmount) - totalPaidSoFar), currency)})
+                                    </span>
+                                )}
                             </label>
                             <div className="relative">
                                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -401,7 +406,18 @@ export default function RecordRepaymentPage() {
                                         onClick={() => setFormData({ ...formData, amount: scheduleInfo.totalRemaining })}
                                         className="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors"
                                     >
-                                        Full balance ({formatCurrency(scheduleInfo.totalRemaining, currency)})
+                                        {t("repayments.fullBalance")} ({formatCurrency(scheduleInfo.totalRemaining, currency)})
+                                    </button>
+                                </div>
+                            )}
+                            {!hasFixedTerm && selectedApp && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, amount: Math.max(0, (selectedApp.approvedAmount || selectedApp.requestedAmount) - totalPaidSoFar) })}
+                                        className="text-xs px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                                    >
+                                        {t("repayments.fullBalance")} ({formatCurrency(Math.max(0, (selectedApp.approvedAmount || selectedApp.requestedAmount) - totalPaidSoFar), currency)})
                                     </button>
                                 </div>
                             )}

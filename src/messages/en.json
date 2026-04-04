@@ -144,7 +144,8 @@
       "EARLY_REPAYMENT": "Early Repayment",
       "PREPAYMENT": "Prepayment",
       "PENALTY": "Penalty"
-    }
+    },
+    "fullBalance": "Full Balance"
   },
   "dashboard": {
     "title": "Dashboard",
