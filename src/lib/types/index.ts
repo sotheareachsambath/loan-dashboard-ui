@@ -91,8 +91,9 @@ export interface LoanProduct {
   maxInterestRate: number;
   minAmount: number;
   maxAmount: number;
-  minTermMonths: number;
-  maxTermMonths: number;
+  hasFixedTerm: boolean;
+  minTermMonths?: number;
+  maxTermMonths?: number;
   currency: Currency;
   gracePeriodDays: number;
   penaltyRate: number;
@@ -112,8 +113,9 @@ export interface CreateLoanProductDto {
   maxInterestRate: number;
   minAmount: number;
   maxAmount: number;
-  minTermMonths: number;
-  maxTermMonths: number;
+  hasFixedTerm?: boolean;
+  minTermMonths?: number;
+  maxTermMonths?: number;
   currency?: Currency;
   gracePeriodDays?: number;
   penaltyRate?: number;

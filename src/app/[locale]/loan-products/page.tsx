@@ -152,7 +152,11 @@ export default function LoanProductsPage() {
                                     <div className="text-sm text-gray-900">
                                         {formatCurrency(product.minAmount, product.currency)} - {formatCurrency(product.maxAmount, product.currency)}
                                     </div>
-                                    <div className="text-xs text-gray-500">{product.minTermMonths} - {product.maxTermMonths} months</div>
+                                    <div className="text-xs text-gray-500">
+                                        {product.hasFixedTerm === false
+                                            ? "Open-ended (no fixed term)"
+                                            : `${product.minTermMonths ?? 0} - ${product.maxTermMonths ?? 0} months`}
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <StatusBadge status={product.isActive ? "ACTIVE" : "INACTIVE"} />

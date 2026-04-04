@@ -53,6 +53,7 @@ export default function RecordRepaymentPage() {
     const collectedById = formData.collectedById || user?.id || "";
     const selectedApp = applications.find((a) => a.id === formData.loanApplicationId);
     const currency = selectedApp?.currency || "USD";
+    const hasFixedTerm = selectedApp?.loanProduct?.hasFixedTerm !== false; // default true if not set
 
     // Fetch repayment schedule for the selected loan
     // API returns ScheduleSummaryResponse: { schedules, totalPaid, totalRemaining, ... }
@@ -157,7 +158,7 @@ export default function RecordRepaymentPage() {
         }
     };
 
-    const isValid = formData.loanApplicationId && formData.amount >= 0.01 && formData.paymentMethod && !hasNoSchedule && schedule.length > 0;
+    const isValid = formData.loanApplicationId && formData.amount >= 0.01 && formData.paymentMethod && (!hasFixedTerm || (!hasNoSchedule && schedule.length > 0));
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -264,8 +265,25 @@ export default function RecordRepaymentPage() {
                             </div>
                         )}
 
+                        {/* Flexible-term loan info */}
+                        {selectedApp && !hasFixedTerm && (
+                            <div className="md:col-span-2 p-5 bg-indigo-50 rounded-xl border border-indigo-200">
+                                <div className="flex items-start gap-3">
+                                    <svg className="w-5 h-5 text-indigo-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-indigo-800 mb-1">Flexible Term Loan</h3>
+                                        <p className="text-sm text-indigo-700">
+                                            This loan product has no fixed repayment schedule. You can record any payment amount directly.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* No Schedule Warning + Generate Button */}
-                        {selectedApp && hasNoSchedule && (
+                        {selectedApp && hasFixedTerm && hasNoSchedule && (
                             <div className="md:col-span-2 p-5 bg-amber-50 rounded-xl border border-amber-200">
                                 <div className="flex items-start gap-3">
                                     <svg className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
@@ -307,7 +325,7 @@ export default function RecordRepaymentPage() {
                         )}
 
                         {/* Outstanding Balance Card */}
-                        {scheduleInfo && (
+                        {hasFixedTerm && scheduleInfo && (
                             <div className="md:col-span-2 p-4 bg-amber-50/50 rounded-xl border border-amber-100">
                                 <h3 className="text-sm font-semibold text-gray-900 mb-3">Outstanding Balance</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
@@ -346,7 +364,7 @@ export default function RecordRepaymentPage() {
                         <div>
                             <label className="block text-sm font-medium text-gray-900 mb-2">
                                 {t("repayments.amount")} *
-                                {scheduleInfo && (
+                                {hasFixedTerm && scheduleInfo && (
                                     <span className="ml-1 text-xs font-normal text-gray-400">
                                         (max: {formatCurrency(scheduleInfo.totalRemaining, currency)})
                                     </span>
@@ -361,7 +379,7 @@ export default function RecordRepaymentPage() {
                                     required
                                     min={0.01}
                                     step="0.01"
-                                    max={scheduleInfo?.totalRemaining ?? undefined}
+                                    max={hasFixedTerm ? (scheduleInfo?.totalRemaining ?? undefined) : undefined}
                                     value={formData.amount || ""}
                                     onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
                                     className="w-full rounded-xl border border-gray-300 bg-white pl-8 pr-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
@@ -369,7 +387,7 @@ export default function RecordRepaymentPage() {
                                 />
                             </div>
                             {/* Quick-fill buttons */}
-                            {scheduleInfo && scheduleInfo.nextDue && (
+                            {hasFixedTerm && scheduleInfo && scheduleInfo.nextDue && (
                                 <div className="flex flex-wrap gap-2 mt-2">
                                     <button
                                         type="button"
@@ -452,7 +470,7 @@ export default function RecordRepaymentPage() {
                     </div>
 
                     {/* Outstanding Installments Preview */}
-                    {scheduleInfo && scheduleInfo.outstandingSchedules.length > 0 && (
+                    {hasFixedTerm && scheduleInfo && scheduleInfo.outstandingSchedules.length > 0 && (
                         <div className="pt-4 border-t border-gray-100">
                             <h3 className="text-sm font-semibold text-gray-900 mb-3">Upcoming Installments (payment will be allocated in order)</h3>
                             <div className="overflow-x-auto rounded-xl border border-gray-200">

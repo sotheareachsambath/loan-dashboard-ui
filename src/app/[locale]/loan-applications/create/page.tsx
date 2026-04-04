@@ -46,7 +46,7 @@ export default function CreateLoanApplicationPage() {
             loanProductId: productId,
             interestRate: product.minInterestRate,
             requestedAmount: product.minAmount,
-            termMonths: product.minTermMonths,
+            termMonths: product.hasFixedTerm ? (product.minTermMonths ?? 1) : 0,
             currency: product.currency,
             gracePeriodDays: product.gracePeriodDays,
         }));
@@ -212,23 +212,41 @@ export default function CreateLoanApplicationPage() {
 
                         {/* Term */}
                         <div>
-                            <label className="block text-sm font-medium text-gray-900 mb-2">
-                                {t("loanApplications.termMonths")} *
-                                {selectedProduct && (
-                                    <span className="ml-1 text-xs font-normal text-gray-400">
-                                        ({selectedProduct.minTermMonths} - {selectedProduct.maxTermMonths} months)
-                                    </span>
-                                )}
-                            </label>
-                            <input
-                                type="number"
-                                required
-                                min={selectedProduct?.minTermMonths ?? 1}
-                                max={selectedProduct?.maxTermMonths ?? undefined}
-                                value={formData.termMonths || ""}
-                                onChange={(e) => setFormData({ ...formData, termMonths: Number(e.target.value) })}
-                                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
-                            />
+                            {selectedProduct && !selectedProduct.hasFixedTerm ? (
+                                <>
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                                        {t("loanApplications.termMonths")}
+                                    </label>
+                                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                                        <svg className="w-4 h-4 text-blue-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                                        </svg>
+                                        <p className="text-xs text-blue-700">
+                                            This product is <strong>open-ended</strong> — no fixed term. The borrower repays until the loan is fully paid off.
+                                        </p>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                                        {t("loanApplications.termMonths")} *
+                                        {selectedProduct && (
+                                            <span className="ml-1 text-xs font-normal text-gray-400">
+                                                ({selectedProduct.minTermMonths} - {selectedProduct.maxTermMonths} months)
+                                            </span>
+                                        )}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        required
+                                        min={selectedProduct?.minTermMonths ?? 1}
+                                        max={selectedProduct?.maxTermMonths ?? undefined}
+                                        value={formData.termMonths || ""}
+                                        onChange={(e) => setFormData({ ...formData, termMonths: Number(e.target.value) })}
+                                        className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                                    />
+                                </>
+                            )}
                         </div>
 
                         {/* Frequency */}

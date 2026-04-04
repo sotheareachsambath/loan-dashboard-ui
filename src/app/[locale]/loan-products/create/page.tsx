@@ -26,6 +26,7 @@ export default function CreateLoanProductPage() {
         maxInterestRate: 0,
         minAmount: 0,
         maxAmount: 0,
+        hasFixedTerm: true,
         minTermMonths: 0,
         maxTermMonths: 0,
         currency: "USD",
@@ -204,35 +205,70 @@ export default function CreateLoanProductPage() {
                             />
                         </div>
 
-                        {/* Min Term */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-900 mb-2">
-                                Min {t("loanProducts.term")} *
-                            </label>
-                            <input
-                                type="number"
-                                required
-                                min={1}
-                                value={formData.minTermMonths || ""}
-                                onChange={(e) => setFormData({ ...formData, minTermMonths: Number(e.target.value) })}
-                                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
-                            />
+                        {/* Fixed Term Toggle */}
+                        <div className="md:col-span-2">
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                <div>
+                                    <label htmlFor="hasFixedTerm" className="text-sm font-medium text-gray-900">
+                                        Fixed Loan Term
+                                    </label>
+                                    <p className="text-xs text-gray-500 mt-0.5">
+                                        {formData.hasFixedTerm
+                                            ? "Loan has a fixed repayment term with min/max months."
+                                            : "Open-ended loan — borrower repays until full balance is paid off. No fixed term limit."}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={formData.hasFixedTerm}
+                                    onClick={() => setFormData({
+                                        ...formData,
+                                        hasFixedTerm: !formData.hasFixedTerm,
+                                        ...(!formData.hasFixedTerm ? {} : { minTermMonths: undefined, maxTermMonths: undefined }),
+                                    })}
+                                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${formData.hasFixedTerm ? "bg-blue-600" : "bg-gray-300"}`}
+                                >
+                                    <span
+                                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.hasFixedTerm ? "translate-x-5" : "translate-x-0"}`}
+                                    />
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Max Term */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-900 mb-2">
-                                Max {t("loanProducts.term")} *
-                            </label>
-                            <input
-                                type="number"
-                                required
-                                min={1}
-                                value={formData.maxTermMonths || ""}
-                                onChange={(e) => setFormData({ ...formData, maxTermMonths: Number(e.target.value) })}
-                                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
-                            />
-                        </div>
+                        {/* Min Term (only when fixed term) */}
+                        {formData.hasFixedTerm && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">
+                                    Min {t("loanProducts.term")} (months) *
+                                </label>
+                                <input
+                                    type="number"
+                                    required
+                                    min={1}
+                                    value={formData.minTermMonths || ""}
+                                    onChange={(e) => setFormData({ ...formData, minTermMonths: Number(e.target.value) })}
+                                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                                />
+                            </div>
+                        )}
+
+                        {/* Max Term (only when fixed term) */}
+                        {formData.hasFixedTerm && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-900 mb-2">
+                                    Max {t("loanProducts.term")} (months) *
+                                </label>
+                                <input
+                                    type="number"
+                                    required
+                                    min={1}
+                                    value={formData.maxTermMonths || ""}
+                                    onChange={(e) => setFormData({ ...formData, maxTermMonths: Number(e.target.value) })}
+                                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors"
+                                />
+                            </div>
+                        )}
 
                         {/* Currency */}
                         <div>
