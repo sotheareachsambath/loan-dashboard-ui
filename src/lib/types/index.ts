@@ -143,6 +143,7 @@ export interface LoanApplication {
   applicant?: User;
   loanProduct?: LoanProduct;
   loanOfficer?: User;
+  approvalWorkflows?: { level: string; action: string; comments?: string; approver?: User; createdAt?: string }[];
   createdAt: string;
   updatedAt: string;
 }

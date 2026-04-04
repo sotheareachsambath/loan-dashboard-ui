@@ -37,9 +37,9 @@ export default function LoanApplicationDetailsPage({
     const { data: officersData } = useUsers({ role: "LOAN_OFFICER", limit: 100 });
     const officers = officersData?.data ?? [];
     const { data: rawSchedule, mutate: mutateSchedule } = useRepaymentSchedule(id);
-    const schedule = Array.isArray(rawSchedule) ? rawSchedule : ((rawSchedule as any)?.data ?? []);
+    const schedule = rawSchedule?.schedules ?? [];
     const { data: rawRepayments } = useRepaymentsByLoan(id);
-    const loanRepayments = Array.isArray(rawRepayments) ? rawRepayments : ((rawRepayments as any)?.data ?? []);
+    const loanRepayments = rawRepayments?.repayments ?? [];
     const { data: rawDisbursements } = useDisbursementsByLoan(id);
     const loanDisbursements = Array.isArray(rawDisbursements) ? rawDisbursements : ((rawDisbursements as any)?.disbursements ?? (rawDisbursements as any)?.data ?? []);
 
@@ -57,22 +57,45 @@ export default function LoanApplicationDetailsPage({
     // Edit form state
     const [editForm, setEditForm] = useState<UpdateLoanApplicationDto>({});
 
+    // API maps: LOAN_OFFICER → OFFICER, MANAGER → MANAGER, DIRECTOR → DIRECTOR
+    // ADMIN is NOT in the roleToLevel map, so ADMIN cannot approve
+    const ROLE_TO_LEVEL: Record<string, string> = {
+        LOAN_OFFICER: "OFFICER",
+        MANAGER: "MANAGER",
+        DIRECTOR: "DIRECTOR",
+    };
+
+    // API valid transitions: status → which approval level is allowed
+    const STATUS_TO_REQUIRED_LEVEL: Record<string, string> = {
+        UNDER_REVIEW: "OFFICER",        // LOAN_OFFICER approves
+        OFFICER_APPROVED: "MANAGER",     // MANAGER approves
+        MANAGER_APPROVED: "DIRECTOR",    // DIRECTOR approves
+    };
+
+    const STATUS_TO_REQUIRED_ROLE: Record<string, string> = {
+        UNDER_REVIEW: "Loan Officer",
+        OFFICER_APPROVED: "Manager",
+        MANAGER_APPROVED: "Director",
+    };
+
     const getApprovalLevel = (role: string) => {
-        if (role === "DIRECTOR") return "DIRECTOR";
-        if (role === "MANAGER") return "MANAGER";
-        return "OFFICER";
+        return ROLE_TO_LEVEL[role] || "OFFICER";
     };
 
     const canUserApproveAtCurrentLevel = () => {
         if (!application || !user) return false;
         const status = application.status;
         const role = user.role;
-        if (status === "SUBMITTED" && (role === "LOAN_OFFICER" || role === "ADMIN")) return true;
-        if (status === "UNDER_REVIEW" && (role === "LOAN_OFFICER" || role === "ADMIN")) return true;
-        if (status === "OFFICER_APPROVED" && (role === "MANAGER" || role === "ADMIN")) return true;
-        if (status === "MANAGER_APPROVED" && (role === "DIRECTOR" || role === "ADMIN")) return true;
-        return false;
+        const requiredLevel = STATUS_TO_REQUIRED_LEVEL[status];
+        if (!requiredLevel) return false; // status not in approval flow
+        const userLevel = ROLE_TO_LEVEL[role];
+        return userLevel === requiredLevel;
     };
+
+    // What role is needed to approve at the current status?
+    const requiredRoleForApproval = application ? STATUS_TO_REQUIRED_ROLE[application.status] : null;
+    // Is the current status in the approval flow but user doesn't have the right role?
+    const isInApprovalFlow = application ? !!STATUS_TO_REQUIRED_LEVEL[application.status] : false;
 
     const handleAction = async () => {
         if (!application || !user) return;
@@ -228,10 +251,12 @@ export default function LoanApplicationDetailsPage({
     }
 
     const isDraft = application.status === "DRAFT";
-    const isEditable = isDraft || application.status === "SUBMITTED";
-    const showApprovalActions = canUserApproveAtCurrentLevel() && canApprove;
-    const showAssign = application.status === "SUBMITTED" && isStaff;
+    const isSubmitted = application.status === "SUBMITTED";
+    const isEditable = isDraft || isSubmitted;
+    const showApprovalActions = canUserApproveAtCurrentLevel();
+    const showAssign = isSubmitted && isStaff;
     const canGenerateSchedule = application.status === "APPROVED" || application.status === "DISBURSED";
+    const isCurrent = isInApprovalFlow; // whether current status is an approval step
 
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
@@ -259,7 +284,7 @@ export default function LoanApplicationDetailsPage({
                     <p className="text-sm text-gray-500 mt-1">Created on {new Date(application.createdAt).toLocaleDateString()}</p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     {isEditable && (
                         <button
                             onClick={openEditModal}
@@ -299,8 +324,76 @@ export default function LoanApplicationDetailsPage({
                             </button>
                         </>
                     )}
+                    {/* Info badge: show who needs to act when current user can't */}
+                    {isInApprovalFlow && !showApprovalActions && requiredRoleForApproval && (
+                        <span className="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 border border-blue-200 px-3 py-2 text-xs font-medium text-blue-700">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                            </svg>
+                            Waiting for {requiredRoleForApproval} approval
+                        </span>
+                    )}
                 </div>
             </div>
+
+            {/* Approval Flow Status Info */}
+            {isInApprovalFlow && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                    <div className="flex items-start gap-3">
+                        <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                        </svg>
+                        <div className="flex-1">
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2">Approval Workflow</h3>
+                            <div className="flex items-center gap-2 text-xs">
+                                {[
+                                    { status: "UNDER_REVIEW", label: "Loan Officer", level: "OFFICER" },
+                                    { status: "OFFICER_APPROVED", label: "Manager", level: "MANAGER" },
+                                    { status: "MANAGER_APPROVED", label: "Director", level: "DIRECTOR" },
+                                ].map((step, i) => {
+                                    const isCompleted = application.approvalWorkflows?.some(
+                                        (w: any) => w.level === step.level && w.action === "APPROVED"
+                                    );
+                                    const isCurrent = application.status === step.status;
+                                    const isRejected = application.status === "REJECTED";
+                                    return (
+                                        <div key={step.level} className="flex items-center gap-2">
+                                            {i > 0 && <svg className="w-4 h-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" /></svg>}
+                                            <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-medium ${
+                                                isCompleted ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                                                isCurrent ? "bg-blue-50 text-blue-700 border border-blue-200 ring-2 ring-blue-100" :
+                                                isRejected ? "bg-red-50 text-red-500 border border-red-200" :
+                                                "bg-gray-50 text-gray-400 border border-gray-200"
+                                            }`}>
+                                                {isCompleted && <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>}
+                                                {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>}
+                                                {step.label}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                                {application.status === "APPROVED" && (
+                                    <div className="flex items-center gap-2">
+                                        <svg className="w-4 h-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" /></svg>
+                                        <span className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-medium bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                            <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>
+                                            Fully Approved
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            {requiredRoleForApproval && (
+                                <p className="text-xs text-gray-500 mt-2">
+                                    {showApprovalActions
+                                        ? `You can approve, reject, or return this application as ${requiredRoleForApproval}.`
+                                        : `A ${requiredRoleForApproval} needs to review this application. Actions: Approve, Reject, or Return for rework.`
+                                    }
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Main Info */}
@@ -384,32 +477,56 @@ export default function LoanApplicationDetailsPage({
                         <div className="p-6">
                             {documents && (documents as any[]).length > 0 ? (
                                 <ul className="space-y-3">
-                                    {(documents as { id?: string; type?: string; originalName?: string; fileName?: string; fileSize?: number }[]).map((doc, i: number) => (
-                                        <li key={doc.id || i} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
-                                            <div className="flex items-center gap-3">
-                                                <svg className="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                </svg>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-900">{doc.originalName || doc.fileName || doc.type || `Document ${i + 1}`}</p>
-                                                    <p className="text-xs text-gray-500">
-                                                        {doc.type && <span className="capitalize">{doc.type.toLowerCase().replace(/_/g, " ")}</span>}
-                                                        {doc.fileSize && <span className="ml-2">{(doc.fileSize / 1024).toFixed(1)} KB</span>}
-                                                    </p>
+                                    {(documents as { id?: string; type?: string; originalName?: string; fileName?: string; filePath?: string; url?: string; fileSize?: number; mimeType?: string }[]).map((doc, i: number) => {
+                                        const viewUrl = doc.url || doc.filePath
+                                            ? (doc.url || doc.filePath)!.startsWith("http")
+                                                ? (doc.url || doc.filePath)!
+                                                : `${API_BASE_URL}/${(doc.url || doc.filePath)!.replace(/^\//, "")}`
+                                            : null;
+                                        const isImage = doc.mimeType?.startsWith("image/") ||
+                                            /\.(jpg|jpeg|png|gif|webp)$/i.test(doc.originalName || doc.fileName || "");
+
+                                        return (
+                                            <li key={doc.id || i} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50/50">
+                                                <div className="flex items-center gap-3">
+                                                    {isImage && viewUrl ? (
+                                                        <img src={viewUrl} alt={doc.originalName || "Document"} className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
+                                                    ) : (
+                                                        <svg className="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                        </svg>
+                                                    )}
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900">{doc.originalName || doc.fileName || doc.type || `Document ${i + 1}`}</p>
+                                                        <p className="text-xs text-gray-500">
+                                                            {doc.type && <span className="capitalize">{doc.type.toLowerCase().replace(/_/g, " ")}</span>}
+                                                            {doc.fileSize && <span className="ml-2">{(doc.fileSize / 1024).toFixed(1)} KB</span>}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {doc.id && (
-                                                    <button
-                                                        onClick={() => handleDeleteDocument(doc.id!)}
-                                                        className="text-sm text-red-500 hover:text-red-700"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </li>
-                                    ))}
+                                                <div className="flex items-center gap-3">
+                                                    {viewUrl && (
+                                                        <a
+                                                            href={viewUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                                                        >
+                                                            View
+                                                        </a>
+                                                    )}
+                                                    {doc.id && (
+                                                        <button
+                                                            onClick={() => handleDeleteDocument(doc.id!)}
+                                                            className="text-sm text-red-500 hover:text-red-700"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </li>
+                                        );
+                                    })}
                                 </ul>
                             ) : (
                                 <div className="text-center py-10">
