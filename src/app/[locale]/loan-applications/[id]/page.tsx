@@ -16,6 +16,7 @@ import type {
     Disbursement,
     RepaymentSchedule,
     Repayment,
+    RepaymentFrequency,
 } from "@/lib/types";
 
 type UploadedAsset = {
