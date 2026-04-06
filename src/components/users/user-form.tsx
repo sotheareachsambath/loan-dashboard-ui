@@ -24,7 +24,8 @@ export default function UserForm({ user }: UserFormProps) {
     email: user?.email ?? "",
     password: "",
     phone: user?.phone ?? "",
-    role: user?.role ?? ("CUSTOMER" as UserRole),
+    //ts-ignore
+    roles: user?.roles ?? ["CUSTOMER" as UserRole],
     status: user?.status ?? ("ACTIVE" as UserStatus),
   });
   const [loading, setLoading] = useState(false);
@@ -46,7 +47,7 @@ export default function UserForm({ user }: UserFormProps) {
           lastName: form.lastName,
           email: form.email,
           phone: form.phone || undefined,
-          role: form.role,
+          roles: form.roles,
           status: form.status,
         };
         if (form.password) body.password = form.password;
@@ -58,7 +59,7 @@ export default function UserForm({ user }: UserFormProps) {
           email: form.email,
           password: form.password,
           phone: form.phone || undefined,
-          role: form.role,
+          roles: form.roles,
         };
         await api.post("/users", body);
       }
@@ -158,8 +159,8 @@ export default function UserForm({ user }: UserFormProps) {
             {t("users.role")}
           </label>
           <select
-            value={form.role}
-            onChange={(e) => update("role", e.target.value)}
+            value={form.roles[0]}
+            onChange={(e) => update("roles", e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             {ROLES.map((role) => (
