@@ -4,12 +4,41 @@ import { use, useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useLoanApplication, useApprovalHistory, useLoanDocuments, useUsers, useRepaymentSchedule, useRepaymentsByLoan, useDisbursementsByLoan } from "@/lib/api/hooks";
-import { api, API_BASE_URL } from "@/lib/api/fetcher";
+import { api } from "@/lib/api/fetcher";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useRole } from "@/lib/hooks/use-role";
 import StatusBadge from "@/components/ui/status-badge";
 import Modal from "@/components/ui/modal";
-import type { UpdateLoanApplicationDto, Currency, RepaymentFrequency } from "@/lib/types";
+import type {
+    UpdateLoanApplicationDto,
+    DocumentType,
+    LoanDocument,
+    Disbursement,
+    RepaymentSchedule,
+    Repayment,
+} from "@/lib/types";
+
+type UploadedAsset = {
+    id: string;
+    key: string;
+    fileName: string;
+    url: string;
+    publicUrl?: string;
+    signedUrl?: string;
+    mimeType: string;
+    fileSize: number;
+};
+
+type LoanDisbursementListResponse = {
+    disbursements?: Disbursement[];
+    data?: Disbursement[];
+};
+
+type DocumentPreviewState = {
+    name: string;
+    url: string;
+    mimeType?: string;
+};
 
 function formatCurrency(amount: number, currency: string) {
     return new Intl.NumberFormat("en-US", {
@@ -29,7 +58,7 @@ export default function LoanApplicationDetailsPage({
     const t = useTranslations();
     const router = useRouter();
     const { user } = useAuth();
-    const { canApprove, isStaff, isCustomer } = useRole();
+    const { isStaff } = useRole();
 
     const { data: application, isLoading, error, mutate } = useLoanApplication(id);
     const { data: history, mutate: mutateHistory } = useApprovalHistory(id);
@@ -41,7 +70,10 @@ export default function LoanApplicationDetailsPage({
     const { data: rawRepayments } = useRepaymentsByLoan(id);
     const loanRepayments = rawRepayments?.repayments ?? [];
     const { data: rawDisbursements } = useDisbursementsByLoan(id);
-    const loanDisbursements = Array.isArray(rawDisbursements) ? rawDisbursements : ((rawDisbursements as any)?.disbursements ?? (rawDisbursements as any)?.data ?? []);
+    const disbursementResponse = rawDisbursements as Disbursement[] | LoanDisbursementListResponse | undefined;
+    const loanDisbursements = Array.isArray(disbursementResponse)
+        ? disbursementResponse
+        : (disbursementResponse?.disbursements ?? disbursementResponse?.data ?? []);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [actionModal, setActionModal] = useState<"approve" | "reject" | "return" | "assign" | "edit" | null>(null);
@@ -53,6 +85,9 @@ export default function LoanApplicationDetailsPage({
     // Document upload
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploading, setUploading] = useState(false);
+    const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType>("OTHER");
+    const [previewDocument, setPreviewDocument] = useState<DocumentPreviewState | null>(null);
+    const [previewZoom, setPreviewZoom] = useState(1);
 
     // Edit form state
     const [editForm, setEditForm] = useState<UpdateLoanApplicationDto>({});
@@ -176,34 +211,70 @@ export default function LoanApplicationDetailsPage({
         setUploading(true);
         setActionError("");
         try {
-            const formData = new FormData();
-            Array.from(files).forEach((file) => {
-                formData.append("files", file);
-            });
+            const uploadedAssets = await Promise.all(
+                Array.from(files).map(async (file) => {
+                    const formData = new FormData();
+                    formData.append("folder", "documents");
+                    formData.append("file", file);
+                    return api.postForm<UploadedAsset>("/assets/upload", formData);
+                })
+            );
 
-            const token = typeof window !== "undefined" ? localStorage.getItem("loanflow_token") : null;
-            const res = await fetch(`${API_BASE_URL}/loan-applications/${id}/documents`, {
-                method: "POST",
-                headers: {
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-                body: formData,
-            });
+            await Promise.all(uploadedAssets.map((asset) =>
+                api.post(`/loan-applications/${id}/documents`, {
+                    filePath: asset.publicUrl || asset.url,
+                    documentType: selectedDocumentType,
+                    fileName: asset.fileName,
+                    originalName: asset.fileName,
+                    mimeType: asset.mimeType,
+                    fileSize: asset.fileSize,
+                })
+            ));
 
-            if (!res.ok) {
-                const body = await res.json().catch(() => null);
-                throw new Error(body?.message || "Upload failed");
-            }
-
-            mutateDocs();
+            await Promise.all([
+                mutateDocs(),
+                mutate(),
+            ]);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Upload failed";
-            setActionError(message);
+            const info = (err as { info?: { message?: string } })?.info?.message;
+            setActionError(info || message);
         } finally {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
+
+    const getDocumentViewUrl = (doc: LoanDocument) => {
+        if (doc.signedUrl) return doc.signedUrl;
+        if (doc.url?.startsWith("http")) return doc.url;
+        if (doc.filePath.startsWith("http")) return doc.filePath;
+        return null;
+    };
+
+    const formatDocumentTypeLabel = (type: string) => {
+        return type.toLowerCase().replace(/_/g, " ");
+    };
+
+    const isPreviewableDocument = (doc: LoanDocument) => {
+        return doc.mimeType?.startsWith("image/") || doc.mimeType === "application/pdf";
+    };
+
+    const clampZoom = (value: number) => Math.min(4, Math.max(0.5, Number(value.toFixed(2))));
+
+    const changePreviewZoom = (delta: number) => {
+        setPreviewZoom((current) => clampZoom(current + delta));
+    };
+
+    const resetPreviewZoom = () => {
+        setPreviewZoom(1);
+    };
+
+    const documentsList = Array.isArray(documents)
+        ? documents
+        : Array.isArray(application?.documents)
+            ? application.documents
+            : [];
 
     const handleDeleteDocument = async (documentId: string) => {
         try {
@@ -254,8 +325,6 @@ export default function LoanApplicationDetailsPage({
     const showApprovalActions = canUserApproveAtCurrentLevel();
     const showAssign = isSubmitted && isStaff;
     const canGenerateSchedule = application.status === "APPROVED" || application.status === "DISBURSED";
-    const isCurrent = isInApprovalFlow; // whether current status is an approval step
-
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
             {/* Action Error Banner */}
@@ -349,9 +418,9 @@ export default function LoanApplicationDetailsPage({
                                     { status: "OFFICER_APPROVED", label: "Manager", level: "MANAGER" },
                                     { status: "MANAGER_APPROVED", label: "Director", level: "DIRECTOR" },
                                 ].map((step, i) => {
-                                    const isCompleted = application.approvalWorkflows?.some(
-                                        (w: any) => w.level === step.level && w.action === "APPROVED"
-                                    );
+                                        const isCompleted = application.approvalWorkflows?.some(
+                                            (w) => w.level === step.level && w.action === "APPROVED"
+                                        );
                                     const isCurrent = application.status === step.status;
                                     const isRejected = application.status === "REJECTED";
                                     return (
@@ -454,6 +523,16 @@ export default function LoanApplicationDetailsPage({
                         <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
                             <h2 className="text-lg font-medium text-gray-900">Documents</h2>
                             <div className="flex items-center gap-2">
+                                <select
+                                    value={selectedDocumentType}
+                                    onChange={(e) => setSelectedDocumentType(e.target.value as DocumentType)}
+                                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                                >
+                                    <option value="ID">ID</option>
+                                    <option value="COLLATERAL">Collateral</option>
+                                    <option value="INCOME_PROOF">Income Proof</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
                                 <input
                                     ref={fileInputRef}
                                     type="file"
@@ -472,14 +551,10 @@ export default function LoanApplicationDetailsPage({
                             </div>
                         </div>
                         <div className="p-6">
-                            {documents && (documents as any[]).length > 0 ? (
+                            {documentsList.length > 0 ? (
                                 <ul className="space-y-3">
-                                    {(documents as { id?: string; type?: string; originalName?: string; fileName?: string; filePath?: string; url?: string; fileSize?: number; mimeType?: string }[]).map((doc, i: number) => {
-                                        const viewUrl = doc.url || doc.filePath
-                                            ? (doc.url || doc.filePath)!.startsWith("http")
-                                                ? (doc.url || doc.filePath)!
-                                                : `${API_BASE_URL}/${(doc.url || doc.filePath)!.replace(/^\//, "")}`
-                                            : null;
+                                    {documentsList.map((doc, i) => {
+                                        const viewUrl = getDocumentViewUrl(doc);
                                         const isImage = doc.mimeType?.startsWith("image/") ||
                                             /\.(jpg|jpeg|png|gif|webp)$/i.test(doc.originalName || doc.fileName || "");
 
@@ -494,23 +569,31 @@ export default function LoanApplicationDetailsPage({
                                                         </svg>
                                                     )}
                                                     <div>
-                                                        <p className="text-sm font-medium text-gray-900">{doc.originalName || doc.fileName || doc.type || `Document ${i + 1}`}</p>
+                                                        <p className="text-sm font-medium text-gray-900">{doc.originalName || doc.fileName || `Document ${i + 1}`}</p>
                                                         <p className="text-xs text-gray-500">
-                                                            {doc.type && <span className="capitalize">{doc.type.toLowerCase().replace(/_/g, " ")}</span>}
+                                                            {doc.documentType && <span className="capitalize">{formatDocumentTypeLabel(doc.documentType)}</span>}
                                                             {doc.fileSize && <span className="ml-2">{(doc.fileSize / 1024).toFixed(1)} KB</span>}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     {viewUrl && (
-                                                        <a
-                                                            href={viewUrl}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                {
+                                                                    setPreviewZoom(1);
+                                                                    setPreviewDocument({
+                                                                        name: doc.originalName || doc.fileName || `Document ${i + 1}`,
+                                                                        url: viewUrl,
+                                                                        mimeType: doc.mimeType,
+                                                                    });
+                                                                }
+                                                            }
                                                             className="text-sm font-medium text-blue-600 hover:text-blue-800"
                                                         >
-                                                            View
-                                                        </a>
+                                                            {isPreviewableDocument(doc) ? "Preview" : "Open"}
+                                                        </button>
                                                     )}
                                                     {doc.id && (
                                                         <button
@@ -533,6 +616,94 @@ export default function LoanApplicationDetailsPage({
                         </div>
                     </div>
 
+                    <Modal
+                        open={!!previewDocument}
+                        onClose={() => {
+                            setPreviewDocument(null);
+                            setPreviewZoom(1);
+                        }}
+                        title={previewDocument?.name || "Document Preview"}
+                        maxWidthClassName="max-w-5xl"
+                    >
+                        {previewDocument && (
+                            <div className="space-y-4">
+                                {previewDocument.mimeType?.startsWith("image/") ? (
+                                    <>
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="text-sm text-gray-500">Use mouse wheel to zoom</p>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => changePreviewZoom(-0.25)}
+                                                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="min-w-16 text-center text-sm font-medium text-gray-700">
+                                                    {Math.round(previewZoom * 100)}%
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => changePreviewZoom(0.25)}
+                                                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                                >
+                                                    +
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={resetPreviewZoom}
+                                                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                                >
+                                                    Reset
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div
+                                            className="max-h-[75vh] overflow-auto rounded-lg border border-gray-200 bg-gray-50 p-4"
+                                            onWheel={(e) => {
+                                                e.preventDefault();
+                                                changePreviewZoom(e.deltaY < 0 ? 0.1 : -0.1);
+                                            }}
+                                        >
+                                            <img
+                                                src={previewDocument.url}
+                                                alt={previewDocument.name}
+                                                className="mx-auto rounded-lg object-contain"
+                                                style={{
+                                                    maxHeight: "70vh",
+                                                    width: "auto",
+                                                    maxWidth: "none",
+                                                    transform: `scale(${previewZoom})`,
+                                                    transformOrigin: "center center",
+                                                }}
+                                            />
+                                        </div>
+                                    </>
+                                ) : previewDocument.mimeType === "application/pdf" ? (
+                                    <iframe
+                                        src={previewDocument.url}
+                                        title={previewDocument.name}
+                                        className="h-[75vh] w-full rounded-lg border border-gray-200"
+                                    />
+                                ) : (
+                                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+                                        Preview is not available for this file type.
+                                    </div>
+                                )}
+                                <div className="flex justify-end">
+                                    <a
+                                        href={previewDocument.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                                    >
+                                        Open in new tab
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+                    </Modal>
+
                     {/* Disbursements for this loan */}
                     {loanDisbursements.length > 0 && (
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -550,7 +721,7 @@ export default function LoanApplicationDetailsPage({
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {loanDisbursements.map((d: any) => (
+                                        {loanDisbursements.map((d: Disbursement & { disbursedAt?: string }) => (
                                             <tr key={d.id} className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(d.disbursedAt || d.createdAt).toLocaleDateString()}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">{formatCurrency(d.amount, application.currency)}</td>
@@ -599,7 +770,7 @@ export default function LoanApplicationDetailsPage({
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {schedule.map((installment: any) => (
+                                        {schedule.map((installment: RepaymentSchedule) => (
                                             <tr key={installment.id || installment.installmentNumber} className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{installment.installmentNumber}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(installment.dueDate).toLocaleDateString()}</td>
@@ -642,7 +813,7 @@ export default function LoanApplicationDetailsPage({
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {loanRepayments.map((rep: any) => (
+                                        {loanRepayments.map((rep: Repayment) => (
                                             <tr key={rep.id} className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(rep.createdAt).toLocaleDateString()}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">{formatCurrency(rep.amount, application.currency || "USD")}</td>

@@ -145,6 +145,7 @@ export interface LoanApplication {
   applicant?: User;
   loanProduct?: LoanProduct;
   loanOfficer?: User;
+  documents?: LoanDocument[];
   approvalWorkflows?: { level: string; action: string; comments?: string; approver?: User; createdAt?: string }[];
   createdAt: string;
   updatedAt: string;
@@ -172,6 +173,29 @@ export interface ApprovalActionDto {
   level: ApprovalLevel;
   action: ApprovalAction;
   comments?: string;
+}
+
+export interface LoanDocument {
+  id: string;
+  loanApplicationId: string;
+  fileName: string;
+  originalName: string;
+  filePath: string;
+  url?: string;
+  signedUrl?: string;
+  fileSize: number;
+  mimeType: string;
+  documentType: DocumentType;
+  createdAt: string;
+}
+
+export interface CreateLoanDocumentDto {
+  filePath: string;
+  documentType: DocumentType;
+  fileName?: string;
+  originalName?: string;
+  mimeType?: string;
+  fileSize?: number;
 }
 
 // ── Repayment Schedules ────────────────────────────────

@@ -5,7 +5,6 @@ import type {
   User,
   LoanProduct,
   LoanApplication,
-  RepaymentSchedule,
   Disbursement,
   Repayment,
   PaginatedResponse,
@@ -15,6 +14,7 @@ import type {
   RepaymentListResponse,
   ParReportResponse,
   ScheduleSummaryResponse,
+  LoanDocument,
 } from "../types";
 
 function useAPI<T>(key: string | null, config?: SWRConfiguration) {
@@ -58,7 +58,7 @@ export function useApprovalHistory(loanId: string | null) {
 }
 
 export function useLoanDocuments(loanId: string | null) {
-  return useAPI<unknown[]>(loanId ? endpoints.loanDocuments(loanId) : null);
+  return useAPI<LoanDocument[]>(loanId ? endpoints.loanDocuments(loanId) : null);
 }
 
 // ── Repayment Schedules ────────────────────────────────
