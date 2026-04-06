@@ -17,7 +17,7 @@ interface AuthUser {
     email: string;
     firstName: string;
     lastName: string;
-    role: string;
+    roles: string[];
 }
 
 interface AuthContextType {
@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: data.email,
                 firstName: data.firstName,
                 lastName: data.lastName,
-                role: data.role,
+                roles: data.roles ?? (data.role ? [data.role] : []),
             };
 
             if (!accessToken) {

@@ -31,26 +31,45 @@ const DISBURSEMENT_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "MANAGER", "LOAN_OF
 // Roles that can collect repayments
 const COLLECTION_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "MANAGER", "LOAN_OFFICER", "TELLER"];
 
+function hasAny(userRoles: UserRole[], allowed: UserRole[]): boolean {
+  return userRoles.some((r) => allowed.includes(r));
+}
+
+function highestLevel(userRoles: UserRole[]): number {
+  return Math.max(0, ...userRoles.map((r) => ROLE_LEVELS[r] ?? 0));
+}
+
 export function useRole() {
   const { user } = useAuth();
-  const role = (user?.role as UserRole) || "CUSTOMER";
+  const roles = ((user?.roles as UserRole[]) ?? []).length > 0
+    ? (user!.roles as UserRole[])
+    : ["CUSTOMER" as UserRole];
+
+  // Highest role for level-based checks
+  const primaryRole = roles.reduce<UserRole>((best, r) =>
+    (ROLE_LEVELS[r] ?? 0) > (ROLE_LEVELS[best] ?? 0) ? r : best,
+    roles[0]
+  );
 
   return {
-    role,
-    isStaff: STAFF_ROLES.includes(role),
-    isAdmin: role === "ADMIN",
-    isDirector: role === "DIRECTOR",
-    isManager: role === "MANAGER",
-    isLoanOfficer: role === "LOAN_OFFICER",
-    isTeller: role === "TELLER",
-    isCustomer: role === "CUSTOMER",
+    roles,
+    role: primaryRole, // backward compat: highest role
+    isStaff: hasAny(roles, STAFF_ROLES),
+    isAdmin: roles.includes("ADMIN"),
+    isDirector: roles.includes("DIRECTOR"),
+    isManager: roles.includes("MANAGER"),
+    isLoanOfficer: roles.includes("LOAN_OFFICER"),
+    isTeller: roles.includes("TELLER"),
+    isCustomer: roles.includes("CUSTOMER"),
 
-    canApprove: APPROVAL_ROLES.includes(role),
-    canManageUsers: USER_MANAGEMENT_ROLES.includes(role),
-    canManageProducts: PRODUCT_MANAGEMENT_ROLES.includes(role),
-    canDisburse: DISBURSEMENT_ROLES.includes(role),
-    canCollect: COLLECTION_ROLES.includes(role),
+    canApprove: hasAny(roles, APPROVAL_ROLES),
+    canManageUsers: hasAny(roles, USER_MANAGEMENT_ROLES),
+    canManageProducts: hasAny(roles, PRODUCT_MANAGEMENT_ROLES),
+    canDisburse: hasAny(roles, DISBURSEMENT_ROLES),
+    canCollect: hasAny(roles, COLLECTION_ROLES),
 
-    hasRoleLevel: (minRole: UserRole) => ROLE_LEVELS[role] >= ROLE_LEVELS[minRole],
+    hasRole: (r: UserRole) => roles.includes(r),
+    hasAnyRole: (allowed: UserRole[]) => hasAny(roles, allowed),
+    hasRoleLevel: (minRole: UserRole) => highestLevel(roles) >= ROLE_LEVELS[minRole],
   };
 }

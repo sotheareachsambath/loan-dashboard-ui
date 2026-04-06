@@ -50,7 +50,7 @@ export interface User {
   firstName: string;
   lastName: string;
   phone?: string;
-  role: UserRole;
+  roles: UserRole[];
   status: UserStatus;
   avatar?: string;
   createdAt: string;
@@ -63,7 +63,7 @@ export interface CreateUserDto {
   firstName: string;
   lastName: string;
   phone?: string;
-  role?: UserRole;
+  roles?: UserRole[];
   avatar?: string;
 }
 
@@ -73,7 +73,7 @@ export interface UpdateUserDto {
   firstName?: string;
   lastName?: string;
   phone?: string;
-  role?: UserRole;
+  roles?: UserRole[];
   avatar?: string;
   status?: UserStatus;
 }
