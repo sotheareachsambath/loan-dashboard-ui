@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useRef } from "react";
+import { use, useEffect, useState, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { useLoanApplication, useApprovalHistory, useLoanDocuments, useUsers, useRepaymentSchedule, useRepaymentsByLoan, useDisbursementsByLoan } from "@/lib/api/hooks";
@@ -89,6 +89,7 @@ export default function LoanApplicationDetailsPage({
     const [selectedDocumentType, setSelectedDocumentType] = useState<DocumentType>("OTHER");
     const [previewDocument, setPreviewDocument] = useState<DocumentPreviewState | null>(null);
     const [previewZoom, setPreviewZoom] = useState(1);
+    const [successToast, setSuccessToast] = useState("");
 
     // Edit form state
     const [editForm, setEditForm] = useState<UpdateLoanApplicationDto>({});
@@ -236,6 +237,9 @@ export default function LoanApplicationDetailsPage({
                 mutateDocs(),
                 mutate(),
             ]);
+            setSuccessToast(
+                `${files.length} document${files.length > 1 ? "s" : ""} uploaded successfully`
+            );
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : "Upload failed";
             const info = (err as { info?: { message?: string } })?.info?.message;
@@ -270,6 +274,16 @@ export default function LoanApplicationDetailsPage({
     const resetPreviewZoom = () => {
         setPreviewZoom(1);
     };
+
+    useEffect(() => {
+        if (!successToast) return;
+
+        const timer = window.setTimeout(() => {
+            setSuccessToast("");
+        }, 3000);
+
+        return () => window.clearTimeout(timer);
+    }, [successToast]);
 
     const documentsList = Array.isArray(documents)
         ? documents
@@ -328,6 +342,30 @@ export default function LoanApplicationDetailsPage({
     const canGenerateSchedule = application.status === "APPROVED" || application.status === "DISBURSED";
     return (
         <div className="space-y-6 max-w-5xl mx-auto">
+            {successToast && (
+                <div className="fixed right-4 top-4 z-[60] max-w-sm rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg">
+                    <div className="flex items-start gap-3">
+                        <svg className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.53-9.78a.75.75 0 00-1.06-1.06L9 10.69 7.53 9.22a.75.75 0 10-1.06 1.06l2 2a.75.75 0 001.06 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-emerald-900">Upload successful</p>
+                            <p className="mt-1 text-sm text-emerald-700">{successToast}</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setSuccessToast("")}
+                            className="text-emerald-400 hover:text-emerald-600"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Action Error Banner */}
             {actionError && !actionModal && (
                 <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm flex items-center justify-between">
