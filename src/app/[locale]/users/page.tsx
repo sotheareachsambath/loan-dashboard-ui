@@ -174,7 +174,7 @@ export default function UsersPage() {
                       {user.phone || "—"}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                      {t(`users.roles.${user.role}`)}
+                      {user.roles?.map((r) => t(`users.roles.${r}`)).join(", ")}
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm">
                       <StatusBadge status={user.status} />
@@ -218,8 +218,8 @@ export default function UsersPage() {
                     key={p}
                     onClick={() => setPage(p)}
                     className={`rounded-md border px-3 py-1 text-sm ${p === page
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                      ? "border-blue-600 bg-blue-600 text-white"
+                      : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
                       }`}
                   >
                     {p}

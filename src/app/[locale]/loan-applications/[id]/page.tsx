@@ -85,11 +85,9 @@ export default function LoanApplicationDetailsPage({
     const canUserApproveAtCurrentLevel = () => {
         if (!application || !user) return false;
         const status = application.status;
-        const role = user.role;
         const requiredLevel = STATUS_TO_REQUIRED_LEVEL[status];
         if (!requiredLevel) return false; // status not in approval flow
-        const userLevel = ROLE_TO_LEVEL[role];
-        return userLevel === requiredLevel;
+        return user.roles?.some((r: string) => ROLE_TO_LEVEL[r] === requiredLevel) ?? false;
     };
 
     // What role is needed to approve at the current status?
@@ -117,7 +115,7 @@ export default function LoanApplicationDetailsPage({
 
                 await api.post(`/loan-applications/${id}/approve`, {
                     approverId: user.id,
-                    level: getApprovalLevel(user.role),
+                    level: STATUS_TO_REQUIRED_LEVEL[application.status] || getApprovalLevel(user.roles?.[0] || ""),
                     action: actionMap[actionModal],
                     comments: actionComments,
                 });
@@ -359,12 +357,11 @@ export default function LoanApplicationDetailsPage({
                                     return (
                                         <div key={step.level} className="flex items-center gap-2">
                                             {i > 0 && <svg className="w-4 h-4 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" /></svg>}
-                                            <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-medium ${
-                                                isCompleted ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                                                isCurrent ? "bg-blue-50 text-blue-700 border border-blue-200 ring-2 ring-blue-100" :
-                                                isRejected ? "bg-red-50 text-red-500 border border-red-200" :
-                                                "bg-gray-50 text-gray-400 border border-gray-200"
-                                            }`}>
+                                            <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-medium ${isCompleted ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                                                    isCurrent ? "bg-blue-50 text-blue-700 border border-blue-200 ring-2 ring-blue-100" :
+                                                        isRejected ? "bg-red-50 text-red-500 border border-red-200" :
+                                                            "bg-gray-50 text-gray-400 border border-gray-200"
+                                                }`}>
                                                 {isCompleted && <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" /></svg>}
                                                 {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>}
                                                 {step.label}
