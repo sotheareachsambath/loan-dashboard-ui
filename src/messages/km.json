@@ -26,6 +26,7 @@
   "nav": {
     "dashboard": "ផ្ទាំងគ្រប់គ្រង",
     "users": "អ្នកប្រើប្រាស់",
+    "customers": "អតិថិជន",
     "loanProducts": "ផលិតផលឥណទាន",
     "loanApplications": "ពាក្យស្នើសុំឥណទាន",
     "repaymentSchedules": "កាលវិភាគសងប្រាក់",
@@ -37,6 +38,30 @@
     "title": "គ្រប់គ្រងអ្នកប្រើប្រាស់",
     "createUser": "បង្កើតអ្នកប្រើប្រាស់",
     "editUser": "កែប្រែអ្នកប្រើប្រាស់",
+    "email": "អ៊ីមែល",
+    "password": "ពាក្យសម្ងាត់",
+    "firstName": "នាមខ្លួន",
+    "lastName": "នាមត្រកូល",
+    "phone": "ទូរសព្ទ",
+    "role": "តួនាទី",
+    "roles": {
+      "ADMIN": "អ្នកគ្រប់គ្រង",
+      "DIRECTOR": "នាយក",
+      "MANAGER": "អ្នកចាត់ការ",
+      "LOAN_OFFICER": "មន្ត្រីឥណទាន",
+      "TELLER": "បេឡាករ",
+      "CUSTOMER": "អតិថិជន"
+    },
+    "statuses": {
+      "ACTIVE": "សកម្ម",
+      "INACTIVE": "អសកម្ម",
+      "SUSPENDED": "ផ្អាក"
+    }
+  },
+  "customers": {
+    "title": "គ្រប់គ្រងអតិថិជន",
+    "createCustomer": "បង្កើតអតិថិជន",
+    "editCustomer": "កែប្រែអតិថិជន",
     "email": "អ៊ីមែល",
     "password": "ពាក្យសម្ងាត់",
     "firstName": "នាមខ្លួន",

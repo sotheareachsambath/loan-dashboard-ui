@@ -31,12 +31,37 @@
     "repaymentSchedules": "Repayment Schedules",
     "disbursements": "Disbursements",
     "repayments": "Repayments",
-    "reports": "Reports"
+    "reports": "Reports",
+    "customers": "Customer"
   },
   "users": {
     "title": "User Management",
     "createUser": "Create User",
     "editUser": "Edit User",
+    "email": "Email",
+    "password": "Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone",
+    "role": "Role",
+    "roles": {
+      "ADMIN": "Admin",
+      "DIRECTOR": "Director",
+      "MANAGER": "Manager",
+      "LOAN_OFFICER": "Loan Officer",
+      "TELLER": "Teller",
+      "CUSTOMER": "Customer"
+    },
+    "statuses": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive",
+      "SUSPENDED": "Suspended"
+    }
+  },
+  "customers": {
+    "title": "Customer Management",
+    "createCustomer": "Create Customer",
+    "editCustomer": "Edit Customer",
     "email": "Email",
     "password": "Password",
     "firstName": "First Name",
